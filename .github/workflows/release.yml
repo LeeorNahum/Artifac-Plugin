@@ -59,6 +59,23 @@ jobs:
           zip -X -r "artifac-${VERSION}.zip" "artifac-${VERSION}"
           sha256sum "artifac-${VERSION}.zip" > "artifac-${VERSION}.zip.sha256"
 
+      # The marketplace entry installs from dist, so hosts that skip submodules still get the skill.
+      - name: Move the dist branch to the staged package
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GIT_AUTHOR_NAME: github-actions[bot]
+          GIT_AUTHOR_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+        shell: bash
+        run: |
+          parent=()
+          if git ls-remote --exit-code --heads origin dist > /dev/null; then
+            git fetch --no-tags origin "+refs/heads/dist:refs/remotes/origin/dist"
+            parent=(--parent refs/remotes/origin/dist)
+          fi
+          commit="$(node scripts/dist-commit.mjs --staged "dist/artifac-${VERSION}" --message "Release ${GITHUB_REF_NAME}. ${SKILL_NOTE}" "${parent[@]}" \
+            | node -p 'JSON.parse(require("node:fs").readFileSync(0, "utf8")).commit')"
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "${commit}:refs/heads/dist"
+
       - name: Publish tagged GitHub release
         env:
           GH_TOKEN: ${{ github.token }}

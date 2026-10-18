@@ -10,7 +10,9 @@ Claude Code adapter (`.claude-plugin/`, `.mcp.json`). It runs no hooks.
 
 The skill lives in its own repository,
 [artifac-skill](https://github.com/LeeorNahum/artifac-skill), included here as a git submodule
-at `skills/artifac`. Release packages carry its files as ordinary files.
+at `skills/artifac`. Each release commits the package, with the skill's files in place, to the
+`dist` branch, which is where the marketplace installs from, and attaches the same package to
+the GitHub release.
 
 ## Tools
 

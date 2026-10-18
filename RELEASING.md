@@ -3,36 +3,47 @@
 `plugin.json` is the version source. The dependent manifests, the bundled skill, and the exact
 published file inventory live in `scripts/release-contract.json`.
 
-The skill is the `skills/artifac` submodule. Its files are never copied into this repository: the
-release step stages them from the submodule as ordinary files, and the skill keeps its own
-`metadata.version` in its own repository.
+The skill is the `skills/artifac` submodule, and it keeps its own `metadata.version` in its own
+repository. No commit on `main` copies its files. The release step stages them from the
+submodule as ordinary files.
 
 1. To ship a newer skill, release it in its repository first, then move the submodule to that
    commit with `git submodule update --remote -- skills/artifac` and commit the new pointer.
 2. Set the next semantic version in `plugin.json`. A new skill version changes what the plugin
    delivers, so it is a plugin release of at least the same size.
 3. Run `node scripts/sync-version.mjs --write`.
-4. Run `npm ci`, `npm run validate`, and `npm test`.
+4. Run `npm ci`, `npm run validate`, `npm test`, and `claude plugin validate --strict .`.
 5. Commit the complete release state and push it through review.
 6. Confirm the reviewed commit is the current `origin/main` tip, tag it as `vX.Y.Z`, and push the
    tag.
 
 The tag workflow checks out the submodule, rejects a tag that does not resolve to the current
 `origin/main` tip or differs from `plugin.json`, and refuses a skill checkout that differs from
-the recorded commit. It stages the contracted files with the skill materialized, creates a ZIP
-and SHA-256 checksum, and publishes both to the GitHub release, whose notes name the skill
-version and commit. It does not submit to or alter any marketplace or directory.
+the recorded commit. It then:
+
+- Stages the contracted files with the skill materialized, and creates a ZIP and SHA-256
+  checksum.
+- Commits the staged package to the `dist` branch on top of the previous `dist` commit, with
+  `scripts/dist-commit.mjs`, and pushes it without force.
+- Publishes the ZIP and checksum to the GitHub release, whose notes name the skill version and
+  commit.
+
+It does not submit to or alter any directory or portal.
 
 Validation uses canonical schemas vendored under `schemas/`. Normal validation is offline and
 checks their recorded hashes. Refresh them only through the explicit network command
 `node scripts/sync-schemas.mjs --refresh`, then review the generated diff.
 
-## Hosts that install from Git
+## Why hosts install from `dist`
 
-Claude Code and Codex install from a clone of this repository, so they read the skill through
-the submodule. After any release, install the plugin from the published marketplace in a clean
-host profile and confirm `skills/artifac/SKILL.md` is present in the installed copy, both on a
-fresh install and on an update from the previous version.
+Claude Code and Codex install a plugin from a Git clone. Codex copies the clone without fetching
+submodules, so a plugin installed from `main` would arrive with an empty `skills/artifac`. The
+marketplace entry therefore names `dist` as its source, and `dist` is written only by the release
+workflow. Never edit or force-push it by hand. Users see a release once `dist` moves, so nothing
+installs until the first release has run.
+
+To try a candidate locally, stage it with `node scripts/stage-release.mjs --output <directory>`
+and start Claude Code with `claude --plugin-dir <directory>`.
 
 ## OpenAI's plugin portal
 
@@ -52,4 +63,5 @@ the bundled skill, the listing text, or the review cases needs a new version and
 
 Anthropic's directory lists a plugin from its GitHub repository. Submit from the developer portal
 at `https://claude.ai/directory/manage` with a paid claude.ai plan, after
-`claude plugin validate --strict .` passes.
+`claude plugin validate --strict .` passes. Point the submission at the `dist` branch when the
+portal asks for a ref, since that is the tree with the skill's files in place.

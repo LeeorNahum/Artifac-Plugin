@@ -6,8 +6,9 @@ no planning, no Context directory, and no copy of the skill.
 
 - The skill's source is the artifac-skill repository, a git submodule at `skills/artifac`. Change
   the skill there, release it, and move the submodule pointer here. Never edit files under
-  `skills/artifac` from this repository, and never commit materialized skill files: only the
-  release scripts copy them, into staged packages.
+  `skills/artifac` from this repository, and never commit materialized skill files to `main`.
+  Only the release scripts copy them, into staged packages and the `dist` branch the release
+  workflow writes.
 - The server, its tools, and the product live in the Artifac-Web repository, and the project's
   decisions in Artifac-Planning's `Context/`, both beside this one under the Artifac folder. A
   change here to the tool list, the server address, or the OAuth flow is checked against

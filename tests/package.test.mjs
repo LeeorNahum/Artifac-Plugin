@@ -6,6 +6,7 @@ import { dirname, relative, resolve, sep } from "node:path"
 import test from "node:test"
 import { fileURLToPath } from "node:url"
 import { parseSkillFrontmatter } from "../scripts/frontmatter.mjs"
+import { distCommit } from "../scripts/dist-commit.mjs"
 import { relativeLinks } from "../scripts/skill.mjs"
 import { stageOpenAi } from "../scripts/stage-openai.mjs"
 import { stageRelease } from "../scripts/stage-release.mjs"
@@ -321,6 +322,38 @@ test("release staging materializes the skill from its submodule and nothing else
   assert.ok(!staged.files.some((file) => file.startsWith(`${skillPath}/.agents/`)))
 })
 
+test("the marketplace entry must install from the dist branch", async (context) => {
+  const candidate = await copyCandidate(context)
+  await editJson(resolve(candidate, ".claude-plugin/marketplace.json"), (marketplace) => { marketplace.plugins[0].source = "./" })
+
+  const result = await validatePackage(candidate)
+  assert.equal(result.ok, false)
+  assert.ok(result.errors.some((error) => error.startsWith("Claude marketplace source must install from the generated dist branch")))
+})
+
+test("a dist commit holds exactly the staged package and moves forward from the previous one", async (context) => {
+  const clone = await cloneCandidate(context)
+  const output = resolve(await temporary(context, "artifac-dist-stage-"), "package")
+  const staged = await stageRelease({ root: clone, output })
+  const author = { name: "Release Test", email: "release@example.com" }
+
+  const first = await distCommit({ root: clone, staged: output, message: "Release v0.0.1", author })
+  assert.equal(first.parent, null)
+  const listed = git(clone, ["ls-tree", "-r", "--name-only", first.commit]).trim().split("\n").sort(compareText)
+  assert.deepEqual(listed, [...staged.files].sort(compareText))
+  for (const path of staged.files) {
+    const blob = execFileSync("git", ["cat-file", "blob", `${first.commit}:${path}`], { cwd: clone })
+    assert.deepEqual(blob, await readFile(resolve(output, path)), `${path} differs in the dist commit`)
+  }
+  assert.ok(git(clone, ["ls-tree", first.commit, "skills/artifac"]).startsWith("040000 tree"), "the skill is a directory, not a submodule")
+
+  git(clone, ["update-ref", "refs/heads/dist", first.commit])
+  const second = await distCommit({ root: clone, staged: output, parent: "refs/heads/dist", message: "Release v0.0.2", author })
+  assert.equal(second.parent, first.commit)
+  assert.equal(git(clone, ["rev-parse", `${second.commit}^`]).trim(), first.commit)
+  assert.equal(git(clone, ["rev-parse", "HEAD"]).trim(), git(root, ["rev-parse", "HEAD"]).trim(), "no branch or checkout moved")
+})
+
 test("release publishing requires the tag to resolve to the current main tip and checks out the skill", async () => {
   const workflow = await readFile(resolve(root, ".github/workflows/release.yml"), "utf8")
   assert.match(workflow, /git rev-parse "\$\{GITHUB_SHA\}\^\{commit\}"/)
@@ -328,6 +361,9 @@ test("release publishing requires the tag to resolve to the current main tip and
   assert.match(workflow, /test "\$\{tagged_commit\}" = "\$\{main_commit\}"/)
   assert.doesNotMatch(workflow, /merge-base --is-ancestor/)
   assert.match(workflow, /submodules: true/)
+  assert.match(workflow, /node scripts\/dist-commit\.mjs --staged "dist\/artifac-\$\{VERSION\}"/)
+  assert.match(workflow, /"\$\{commit\}:refs\/heads\/dist"/)
+  assert.doesNotMatch(workflow, /push[^\n]*--force/)
   assert.match(await readFile(resolve(root, ".github/workflows/validate.yml"), "utf8"), /submodules: true/)
 })
 

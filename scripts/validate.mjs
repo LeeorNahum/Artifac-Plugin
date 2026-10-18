@@ -17,6 +17,16 @@ const scriptRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..")
 const pluginName = "artifac"
 const serverUrl = "https://mcp.artif.ac/mcp"
 
+// Hosts install from a Git clone, and some copy the plugin without fetching
+// submodules, so the marketplace entry installs from the dist branch, where
+// the release workflow commits the package with the skill as ordinary files.
+// Claude Code and Codex both read this entry.
+const distSource = {
+  source: "url",
+  url: "https://github.com/LeeorNahum/Artifac-Plugin.git",
+  ref: "dist",
+}
+
 // The Artifac MCP server's tools, as packages/domain/src/mcp-tools.ts in
 // Artifac-Web defines them. The README names each one, and the OpenAI review
 // cases may name only these.
@@ -269,7 +279,9 @@ export async function validatePackage(root = scriptRoot) {
   addEqual(errors, "Claude plugin name", claudePlugin?.name, plugin?.name)
   addEqual(errors, "Claude plugin description", claudePlugin?.description, plugin?.description)
   addEqual(errors, "Claude marketplace name", claudeMarketplace?.name, plugin?.name)
-  addEqual(errors, "Claude marketplace source", claudeMarketplace?.plugins?.[0]?.source, "./")
+  if (!isDeepStrictEqual(claudeMarketplace?.plugins?.[0]?.source, distSource)) {
+    errors.push(`Claude marketplace source must install from the generated dist branch, ${JSON.stringify(distSource)}`)
+  }
   addEqual(errors, "Claude marketplace plugin name", claudeMarketplace?.plugins?.[0]?.name, plugin?.name)
   addEqual(errors, "Claude marketplace description", claudeMarketplace?.plugins?.[0]?.description, plugin?.description)
   if ((claudeMarketplace?.plugins?.length ?? 0) !== 1) errors.push(".claude-plugin/marketplace.json must list exactly one plugin")
