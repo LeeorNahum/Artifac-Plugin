@@ -1,0 +1,39 @@
+{
+  "version": {
+    "source": {
+      "path": "plugin.json",
+      "jsonPointer": "/version"
+    },
+    "dependents": [
+      {
+        "path": ".claude-plugin/marketplace.json",
+        "jsonPointer": "/plugins/0/version"
+      },
+      {
+        "path": ".claude-plugin/plugin.json",
+        "jsonPointer": "/version"
+      }
+    ]
+  },
+  "skill": {
+    "path": "skills/artifac",
+    "name": "artifac",
+    "include": [
+      "SKILL.md",
+      "assets",
+      "references",
+      "scripts"
+    ]
+  },
+  "publishedFiles": [
+    ".claude-plugin/marketplace.json",
+    ".claude-plugin/plugin.json",
+    ".mcp.json",
+    "LICENSE",
+    "README.md",
+    "SETUP.md",
+    "assets/icon.png",
+    "mcp.json",
+    "plugin.json"
+  ]
+}

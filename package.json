@@ -1,0 +1,14 @@
+{
+  "name": "artifac-plugin-validation",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "validate": "node scripts/sync-schemas.mjs --check && node scripts/validate.mjs"
+  },
+  "devDependencies": {
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1",
+    "yaml": "2.9.1"
+  }
+}

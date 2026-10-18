@@ -1,0 +1,28 @@
+{
+  "sources": [
+    {
+      "id": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+      "path": "agent-plugins/plugin.schema.json",
+      "url": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+      "sha256": "bd0cfd6388f7d5c5c1b4c5edd70df030276345df115274686a0e6d52a92366ed"
+    },
+    {
+      "id": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
+      "path": "agent-plugins/mcp.schema.json",
+      "url": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
+      "sha256": "2d4b2b9d1c95e75a356152534d2071f18094c1ee9be2eec238c91a1e1f9bd115"
+    },
+    {
+      "id": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+      "path": "claude/plugin.schema.json",
+      "url": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+      "sha256": "420a5867ff775f89ec6fdc211bf3e131633ec0856a1c33bea7fc0e2e2ed0daa6"
+    },
+    {
+      "id": "https://json.schemastore.org/claude-code-marketplace.json",
+      "path": "claude/marketplace.schema.json",
+      "url": "https://json.schemastore.org/claude-code-marketplace.json",
+      "sha256": "5669285a06a76b266074b41ffd3f3fd8e895b45a64ef453a3a124f842c6d4810"
+    }
+  ]
+}

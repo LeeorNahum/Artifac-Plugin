@@ -1,0 +1,357 @@
+import assert from "node:assert/strict"
+import { execFileSync } from "node:child_process"
+import { cp, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises"
+import { tmpdir } from "node:os"
+import { dirname, relative, resolve, sep } from "node:path"
+import test from "node:test"
+import { fileURLToPath } from "node:url"
+import { parseSkillFrontmatter } from "../scripts/frontmatter.mjs"
+import { relativeLinks } from "../scripts/skill.mjs"
+import { stageOpenAi } from "../scripts/stage-openai.mjs"
+import { stageRelease } from "../scripts/stage-release.mjs"
+import { synchronizeVersions } from "../scripts/sync-version.mjs"
+import { validatePackage } from "../scripts/validate.mjs"
+
+const root = resolve(dirname(fileURLToPath(import.meta.url)), "..")
+const skillPath = "skills/artifac"
+
+function compareText(left, right) {
+  if (left < right) return -1
+  if (left > right) return 1
+  return 0
+}
+
+async function walk(path, base = path) {
+  const entries = await readdir(path, { withFileTypes: true })
+  const files = []
+  for (const entry of entries) {
+    const child = resolve(path, entry.name)
+    if (entry.isDirectory()) files.push(...await walk(child, base))
+    if (entry.isFile()) files.push(relative(base, child).split(sep).join("/"))
+  }
+  return files.sort(compareText)
+}
+
+async function temporary(context, prefix) {
+  const path = await mkdtemp(resolve(tmpdir(), prefix))
+  context.after(() => rm(path, { recursive: true, force: true }))
+  return path
+}
+
+// A copy of the working tree without Git metadata, so validation checks the
+// files themselves and skips the submodule's Git state.
+async function copyCandidate(context) {
+  const candidate = resolve(await temporary(context, "artifac-plugin-test-"), "candidate")
+  await cp(root, candidate, {
+    recursive: true,
+    filter: (path) => !path.includes(`${sep}.git${sep}`)
+      && !path.endsWith(`${sep}.git`)
+      && !path.includes(`${sep}node_modules${sep}`)
+      && !path.endsWith(`${sep}node_modules`)
+      && !path.includes(`${sep}dist${sep}`)
+      && !path.endsWith(`${sep}dist`),
+  })
+  return candidate
+}
+
+function git(cwd, args) {
+  return execFileSync("git", args, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] })
+}
+
+// A real clone of the committed repository, with the skill submodule
+// initialized from this checkout's copy so the test needs no network.
+async function cloneCandidate(context, { initialize = true } = {}) {
+  const clone = resolve(await temporary(context, "artifac-plugin-clone-"), "clone")
+  git(root, ["clone", "--quiet", "--no-hardlinks", root, clone])
+  if (initialize) {
+    git(clone, ["config", `submodule.${skillPath}.url`, resolve(root, skillPath)])
+    git(clone, ["-c", "protocol.file.allow=always", "submodule", "update", "--quiet", "--init", "--", skillPath])
+  }
+  return clone
+}
+
+async function editJson(path, change) {
+  const document = JSON.parse(await readFile(path, "utf8"))
+  change(document)
+  await writeFile(path, `${JSON.stringify(document, null, 2)}\n`)
+}
+
+test("the candidate package satisfies its release contract", async () => {
+  const result = await validatePackage(root)
+  const plugin = JSON.parse(await readFile(resolve(root, "plugin.json"), "utf8"))
+  assert.deepEqual(result.errors, [])
+  assert.equal(result.ok, true)
+  assert.equal(result.version, plugin.version)
+  assert.ok(result.skillFiles.includes(`${skillPath}/SKILL.md`))
+})
+
+test("version drift fails validation", async (context) => {
+  const candidate = await copyCandidate(context)
+  await editJson(resolve(candidate, ".claude-plugin/plugin.json"), (manifest) => { manifest.version = "0.0.0" })
+
+  const result = await validatePackage(candidate)
+  assert.equal(result.ok, false)
+  assert.ok(result.errors.some((error) => error.includes(".claude-plugin/plugin.json version")))
+})
+
+test("version generation repairs declared dependent surfaces", async (context) => {
+  const candidate = await copyCandidate(context)
+  await editJson(resolve(candidate, ".claude-plugin/plugin.json"), (manifest) => { manifest.version = "0.0.0" })
+
+  const sync = await synchronizeVersions({ root: candidate, write: true })
+  const result = await validatePackage(candidate)
+  assert.deepEqual(sync.changed, [".claude-plugin/plugin.json"])
+  assert.equal(result.ok, true)
+})
+
+test("version generation never touches the skill's own version", async (context) => {
+  const candidate = await copyCandidate(context)
+  const before = await readFile(resolve(candidate, skillPath, "SKILL.md"), "utf8")
+  await editJson(resolve(candidate, "plugin.json"), (manifest) => { manifest.version = "9.9.9" })
+
+  await synchronizeVersions({ root: candidate, write: true })
+  assert.equal(await readFile(resolve(candidate, skillPath, "SKILL.md"), "utf8"), before)
+  assert.equal((await validatePackage(candidate)).ok, true)
+})
+
+test("contract validation is independent of legal JSON property order", async (context) => {
+  const candidate = await copyCandidate(context)
+  await editJson(resolve(candidate, "scripts/release-contract.json"), (contract) => {
+    const reordered = {
+      publishedFiles: contract.publishedFiles,
+      skill: Object.fromEntries(Object.entries(contract.skill).reverse()),
+      version: {
+        dependents: contract.version.dependents.map((dependent) => Object.fromEntries(Object.entries(dependent).reverse())),
+        source: Object.fromEntries(Object.entries(contract.version.source).reverse()),
+      },
+    }
+    for (const key of Object.keys(contract)) delete contract[key]
+    Object.assign(contract, reordered)
+  })
+
+  const result = await validatePackage(candidate)
+  assert.deepEqual(result.errors, [])
+})
+
+test("YAML parsing handles folded scalars and nested metadata", () => {
+  const content = `---
+name: artifac
+description: >-
+  Build artifacts,
+  even when a request does not name them.
+metadata:
+  release:
+    version: "nested-lookalike"
+  version: '1.2.3'
+---
+
+# Body
+`
+  const parsed = parseSkillFrontmatter(content)
+  assert.equal(parsed.data.description, "Build artifacts, even when a request does not name them.")
+  assert.equal(parsed.data.metadata.release.version, "nested-lookalike")
+  assert.equal(parsed.data.metadata.version, "1.2.3")
+  assert.equal(parsed.body.trim(), "# Body")
+})
+
+test("link extraction skips code, URLs, and fragments", () => {
+  const markdown = "Read [one](references/a.md#top) and [two](./assets/b.html).\n`[no](skip.md)`\n```\n[no](skip.md)\n```\n[site](https://artif.ac) [abs](/root.md)"
+  assert.deepEqual(relativeLinks(markdown), ["./assets/b.html", "references/a.md"])
+})
+
+test("canonical schemas reject unknown manifest properties", async (context) => {
+  const candidate = await copyCandidate(context)
+  await editJson(resolve(candidate, "plugin.json"), (manifest) => { manifest.unrecognized = true })
+
+  const result = await validatePackage(candidate)
+  assert.equal(result.ok, false)
+  assert.ok(result.errors.some((error) => error.startsWith("plugin.json/") && error.includes("additional properties")))
+})
+
+test("vendored schema drift fails validation", async (context) => {
+  const candidate = await copyCandidate(context)
+  await editJson(resolve(candidate, "schemas/agent-plugins/plugin.schema.json"), (schema) => { schema.title = "Tampered schema" })
+
+  const result = await validatePackage(candidate)
+  assert.equal(result.ok, false)
+  assert.ok(result.errors.some((error) => error.includes("recorded SHA-256")))
+})
+
+test("credential-bearing MCP configuration is rejected", async (context) => {
+  const candidate = await copyCandidate(context)
+  await editJson(resolve(candidate, "mcp.json"), (mcp) => { mcp.mcpServers.artifac.headers = { Authorization: "Bearer placeholder" } })
+
+  const result = await validatePackage(candidate)
+  assert.equal(result.ok, false)
+  assert.ok(result.errors.includes("mcp.json artifac server must not declare request headers or credentials"))
+})
+
+test("credential-bearing Claude MCP configuration is rejected", async (context) => {
+  const candidate = await copyCandidate(context)
+  await editJson(resolve(candidate, ".mcp.json"), (mcp) => { mcp.mcpServers.artifac.headers = { Authorization: "Bearer placeholder" } })
+
+  const result = await validatePackage(candidate)
+  assert.equal(result.ok, false)
+  assert.ok(result.errors.includes(".mcp.json artifac server must not declare request headers or credentials"))
+})
+
+test("a different server address fails validation", async (context) => {
+  const candidate = await copyCandidate(context)
+  await editJson(resolve(candidate, ".mcp.json"), (mcp) => { mcp.mcpServers.artifac.url = "https://mcp.example.com/mcp" })
+
+  const result = await validatePackage(candidate)
+  assert.equal(result.ok, false)
+  assert.ok(result.errors.some((error) => error.startsWith(".mcp.json server URL")))
+})
+
+test("a hooks declaration fails validation", async (context) => {
+  const candidate = await copyCandidate(context)
+  await editJson(resolve(candidate, ".claude-plugin/plugin.json"), (manifest) => { manifest.hooks = "./.claude-plugin/hooks.json" })
+
+  const result = await validatePackage(candidate)
+  assert.equal(result.ok, false)
+  assert.ok(result.errors.includes(".claude-plugin/plugin.json must not declare hooks"))
+})
+
+test("a hooks file a host would load undeclared fails validation", async (context) => {
+  const candidate = await copyCandidate(context)
+  await mkdir(resolve(candidate, "hooks"))
+  await writeFile(resolve(candidate, "hooks/hooks.json"), "{}")
+
+  const result = await validatePackage(candidate)
+  assert.equal(result.ok, false)
+  assert.ok(result.errors.includes("hooks must not exist: the plugin runs no hooks"))
+})
+
+test("a missing skill fails validation", async (context) => {
+  const candidate = await copyCandidate(context)
+  await rm(resolve(candidate, skillPath), { recursive: true, force: true })
+
+  const result = await validatePackage(candidate)
+  assert.equal(result.ok, false)
+  assert.ok(result.errors.some((error) => error.includes(`${skillPath}/SKILL.md is missing`)))
+})
+
+test("a skill whose name differs from its directory fails validation", async (context) => {
+  const candidate = await copyCandidate(context)
+  const path = resolve(candidate, skillPath, "SKILL.md")
+  await writeFile(path, (await readFile(path, "utf8")).replace('name: "artifac"', 'name: "artifac-renamed"'))
+
+  const result = await validatePackage(candidate)
+  assert.equal(result.ok, false)
+  assert.ok(result.errors.some((error) => error.startsWith("Skill name")))
+})
+
+test("a SKILL.md link outside the packaged files fails validation", async (context) => {
+  const candidate = await copyCandidate(context)
+  const path = resolve(candidate, skillPath, "SKILL.md")
+  await writeFile(path, `${await readFile(path, "utf8")}\nSee [the maintainer notes](AGENTS.md).\n`)
+
+  const result = await validatePackage(candidate)
+  assert.equal(result.ok, false)
+  assert.ok(result.errors.some((error) => error.includes("links to AGENTS.md")))
+})
+
+test("listing skill files in publishedFiles fails validation", async (context) => {
+  const candidate = await copyCandidate(context)
+  await editJson(resolve(candidate, "scripts/release-contract.json"), (contract) => {
+    contract.publishedFiles = [...contract.publishedFiles, `${skillPath}/SKILL.md`].sort(compareText)
+  })
+
+  const result = await validatePackage(candidate)
+  assert.equal(result.ok, false)
+  assert.ok(result.errors.some((error) => error.includes("must not list skill files")))
+})
+
+test("the OpenAI review needs five positive and three negative cases naming real tools", async (context) => {
+  const candidate = await copyCandidate(context)
+  await editJson(resolve(candidate, "plugin.json"), (manifest) => {
+    const cases = manifest.extensions["com.openai"].review.test_cases
+    cases.positive[0].tools_triggered = "list_workspaces, publish_artifact"
+    cases.negative.pop()
+  })
+
+  const result = await validatePackage(candidate)
+  assert.equal(result.ok, false)
+  assert.ok(result.errors.includes("OpenAI review needs exactly three negative test cases"))
+  assert.ok(result.errors.some((error) => error.includes("unknown tool \"publish_artifact\"")))
+})
+
+test("an em dash in packaged prose fails validation", async (context) => {
+  const candidate = await copyCandidate(context)
+  const path = resolve(candidate, skillPath, "references/errors.md")
+  await writeFile(path, `${await readFile(path, "utf8")}\nA pause — here.\n`)
+
+  const result = await validatePackage(candidate)
+  assert.equal(result.ok, false)
+  assert.ok(result.errors.includes("Runtime prose contains an em or en dash"))
+})
+
+test("an uninitialized skill submodule fails validation in a real checkout", async (context) => {
+  const clone = await cloneCandidate(context, { initialize: false })
+  const result = await validatePackage(clone)
+  assert.equal(result.ok, false)
+  assert.ok(result.errors.some((error) => error.includes(`${skillPath}/SKILL.md is missing`)))
+})
+
+test("a changed skill submodule fails validation in a real checkout", async (context) => {
+  const clone = await cloneCandidate(context)
+  assert.deepEqual((await validatePackage(clone)).errors, [])
+
+  await writeFile(resolve(clone, skillPath, "references/extra.md"), "Not committed in the skill repository.\n")
+  const result = await validatePackage(clone)
+  assert.equal(result.ok, false)
+  assert.ok(result.errors.includes(`${skillPath} has uncommitted or untracked changes`))
+})
+
+test("release staging materializes the skill from its submodule and nothing else", async (context) => {
+  const output = resolve(await temporary(context, "artifac-release-test-"), "artifac-package")
+  const staged = await stageRelease({ root, output })
+  const plugin = JSON.parse(await readFile(resolve(root, "plugin.json"), "utf8"))
+
+  assert.deepEqual(await walk(output), [...staged.files].sort(compareText))
+  assert.equal(staged.version, plugin.version)
+  assert.ok(staged.files.includes(`${skillPath}/SKILL.md`))
+  for (const path of staged.files.filter((file) => file.startsWith(`${skillPath}/`))) {
+    assert.deepEqual(await readFile(resolve(output, path)), await readFile(resolve(root, path)), `${path} differs from the submodule`)
+  }
+  for (const maintainerFile of ["AGENTS.md", "CLAUDE.md", "README.md", ".gitmodules"]) {
+    assert.ok(!staged.files.includes(`${skillPath}/${maintainerFile}`), `${maintainerFile} is not part of the package`)
+  }
+  assert.ok(!staged.files.some((file) => file.startsWith(`${skillPath}/.agents/`)))
+})
+
+test("release publishing requires the tag to resolve to the current main tip and checks out the skill", async () => {
+  const workflow = await readFile(resolve(root, ".github/workflows/release.yml"), "utf8")
+  assert.match(workflow, /git rev-parse "\$\{GITHUB_SHA\}\^\{commit\}"/)
+  assert.match(workflow, /git rev-parse "origin\/main\^\{commit\}"/)
+  assert.match(workflow, /test "\$\{tagged_commit\}" = "\$\{main_commit\}"/)
+  assert.doesNotMatch(workflow, /merge-base --is-ancestor/)
+  assert.match(workflow, /submodules: true/)
+  assert.match(await readFile(resolve(root, ".github/workflows/validate.yml"), "utf8"), /submodules: true/)
+})
+
+test("OpenAI staging refuses a listing without a demo recording", async (context) => {
+  const output = resolve(await temporary(context, "artifac-openai-"), "package")
+  await assert.rejects(stageOpenAi({ root, output }), /demo_recording_url/)
+})
+
+test("OpenAI staging adds the client registration setting, carries the skill, and leaves the repository file alone", async (context) => {
+  const candidate = await copyCandidate(context)
+  await editJson(resolve(candidate, "plugin.json"), (manifest) => {
+    manifest.extensions["com.openai"].review.demo_recording_url = "https://example.com/demo.mp4"
+  })
+  const output = resolve(await temporary(context, "artifac-openai-"), "package")
+
+  const staged = await stageOpenAi({ root: candidate, output })
+  assert.deepEqual(await walk(output), [...staged.files].sort(compareText))
+  assert.ok(staged.files.includes("plugin.json"))
+  assert.ok(staged.files.includes(`${skillPath}/SKILL.md`))
+  assert.ok(!staged.files.some((path) => path.startsWith(".")))
+  const stagedMcp = JSON.parse(await readFile(resolve(output, "mcp.json"), "utf8"))
+  assert.deepEqual(stagedMcp.mcpServers.artifac.extensions, {
+    "com.openai": { auth: { type: "oauth", client: { mode: "dcr" } } },
+  })
+  const own = JSON.parse(await readFile(resolve(candidate, "mcp.json"), "utf8"))
+  assert.equal(own.mcpServers.artifac.extensions, undefined)
+})
