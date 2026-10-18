@@ -1,8 +1,9 @@
 # Artifac Plugin
 
-This repository packages Artifac for agent hosts. It holds only the plugin manifests, the MCP
-connection to `https://mcp.artif.ac/mcp`, the release scripts, and the `artifac` skill as a
-submodule. It is public.
+This repository packages Artifac for agent hosts: the plugin manifests, the MCP connection to
+`https://mcp.artif.ac/mcp`, the `artifac` skill as a submodule, and the scripts and tests that
+validate and release them. It is public. Server code, planning, and the skill's own source live
+in their own repositories.
 
 - The skill's source is the artifac-skill repository, a git submodule at `skills/artifac`. Change
   the skill there, release it, and move the submodule pointer here. Never edit files under

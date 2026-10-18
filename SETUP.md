@@ -14,6 +14,8 @@ choose **Authenticate**. If Claude Code runs somewhere that cannot receive the b
 localhost, use the completion option Claude Code offers, and paste the full callback URL only when
 it asks for it.
 
+In Codex, run `codex mcp login artifac`.
+
 ## Check the connection
 
 Ask your agent to list your Artifac workspaces. Every account has at least one, so a list means
