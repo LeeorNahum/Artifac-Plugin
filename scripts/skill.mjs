@@ -1,8 +1,8 @@
 // The bundled skill lives in its own repository and is a git submodule here,
-// at the path every host reads skills from. Nothing in this repository copies
-// its files: the release step materializes them from the submodule into the
-// staged package, and this module says which files those are and whether the
-// submodule is in a state a release may be built from.
+// at the path Agent Plugins hosts and Claude Code read skills from. Nothing
+// on main copies its files: the release step materializes them from the
+// submodule into the staged package, and this module says which files those
+// are and whether the submodule is in a state a release may be built from.
 
 import { execFileSync } from "node:child_process"
 import { existsSync, readdirSync, statSync } from "node:fs"
@@ -26,10 +26,10 @@ function compareText(left, right) {
 }
 
 /**
- * The skill's runtime files, as repository-relative paths: SKILL.md and the
- * directories the Agent Skills specification defines, whichever exist. The
- * skill repository's maintainer files (its AGENTS.md, README.md, and its own
- * installed skills) are not part of the package.
+ * The skill's runtime files, as repository-relative paths: SKILL.md, its
+ * license, and the directories the Agent Skills specification defines,
+ * whichever exist. The skill repository's maintainer files (its AGENTS.md,
+ * README.md, and its own installed skills) are not part of the package.
  */
 export function skillFiles(root, skill) {
   const skillRoot = resolve(root, skill.path)

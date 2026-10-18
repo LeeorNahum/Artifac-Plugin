@@ -61,7 +61,7 @@ const expectedVersionContract = {
 const expectedSkillContract = {
   path: "skills/artifac",
   name: "artifac",
-  include: ["SKILL.md", "assets", "references", "scripts"],
+  include: ["LICENSE", "SKILL.md", "assets", "references", "scripts"],
 }
 
 // The top-level keys the Agent Skills specification defines for SKILL.md.
@@ -283,6 +283,9 @@ export async function validatePackage(root = scriptRoot) {
     errors.push(`Claude marketplace source must install from the generated dist branch, ${JSON.stringify(distSource)}`)
   }
   addEqual(errors, "Claude marketplace plugin name", claudeMarketplace?.plugins?.[0]?.name, plugin?.name)
+  // Before install, Claude Code shows only the entry's own fields for a source outside the marketplace.
+  addEqual(errors, "Claude marketplace displayName", claudeMarketplace?.plugins?.[0]?.displayName, claudePlugin?.displayName)
+  addEqual(errors, "Claude plugin displayName", claudePlugin?.displayName, plugin?.extensions?.["com.openai"]?.interface?.displayName)
   addEqual(errors, "Claude marketplace description", claudeMarketplace?.plugins?.[0]?.description, plugin?.description)
   if ((claudeMarketplace?.plugins?.length ?? 0) !== 1) errors.push(".claude-plugin/marketplace.json must list exactly one plugin")
 

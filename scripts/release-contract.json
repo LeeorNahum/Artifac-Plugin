@@ -19,6 +19,7 @@
     "path": "skills/artifac",
     "name": "artifac",
     "include": [
+      "LICENSE",
       "SKILL.md",
       "assets",
       "references",
