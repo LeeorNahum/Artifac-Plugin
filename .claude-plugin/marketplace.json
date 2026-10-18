@@ -8,12 +8,13 @@
   "plugins": [
     {
       "name": "artifac",
+      "displayName": "Artifac",
       "source": {
         "source": "url",
         "url": "https://github.com/LeeorNahum/Artifac-Plugin.git",
         "ref": "dist"
       },
-      "description": "Create and update interactive web pages, apps, and sites on Artifac from this agent, with saved data and files. Bundles the Artifac skill and connects the Artifac MCP server.",
+      "description": "Create and update interactive web pages, apps, and sites on Artifac, with saved data and files. Bundles the Artifac skill and connects the Artifac MCP server.",
       "version": "1.0.0",
       "author": {
         "name": "Leeor Nahum",

@@ -313,6 +313,7 @@ test("release staging materializes the skill from its submodule and nothing else
   assert.deepEqual(await walk(output), [...staged.files].sort(compareText))
   assert.equal(staged.version, plugin.version)
   assert.ok(staged.files.includes(`${skillPath}/SKILL.md`))
+  assert.ok(staged.files.includes(`${skillPath}/LICENSE`))
   for (const path of staged.files.filter((file) => file.startsWith(`${skillPath}/`))) {
     assert.deepEqual(await readFile(resolve(output, path)), await readFile(resolve(root, path)), `${path} differs from the submodule`)
   }
@@ -369,7 +370,26 @@ test("release publishing requires the tag to resolve to the current main tip and
 
 test("OpenAI staging refuses a listing without a demo recording", async (context) => {
   const output = resolve(await temporary(context, "artifac-openai-"), "package")
-  await assert.rejects(stageOpenAi({ root, output }), /demo_recording_url/)
+  await assert.rejects(stageOpenAi({ root, output, checkLink: async () => true }), /demo_recording_url/)
+})
+
+test("OpenAI staging refuses while a listing link does not answer", async (context) => {
+  const candidate = await copyCandidate(context)
+  await editJson(resolve(candidate, "plugin.json"), (manifest) => {
+    manifest.extensions["com.openai"].review.demo_recording_url = "https://example.com/demo.mp4"
+  })
+  const output = resolve(await temporary(context, "artifac-openai-"), "package")
+  const checkLink = async (url) => !url.endsWith("/privacy")
+  await assert.rejects(stageOpenAi({ root: candidate, output, checkLink }), /privacyPolicyURL/)
+})
+
+test("a marketplace entry without the plugin's display name fails validation", async (context) => {
+  const candidate = await copyCandidate(context)
+  await editJson(resolve(candidate, ".claude-plugin/marketplace.json"), (marketplace) => { delete marketplace.plugins[0].displayName })
+
+  const result = await validatePackage(candidate)
+  assert.equal(result.ok, false)
+  assert.ok(result.errors.some((error) => error.startsWith("Claude marketplace displayName")))
 })
 
 test("OpenAI staging adds the client registration setting, carries the skill, and leaves the repository file alone", async (context) => {
@@ -379,7 +399,7 @@ test("OpenAI staging adds the client registration setting, carries the skill, an
   })
   const output = resolve(await temporary(context, "artifac-openai-"), "package")
 
-  const staged = await stageOpenAi({ root: candidate, output })
+  const staged = await stageOpenAi({ root: candidate, output, checkLink: async () => true })
   assert.deepEqual(await walk(output), [...staged.files].sort(compareText))
   assert.ok(staged.files.includes("plugin.json"))
   assert.ok(staged.files.includes(`${skillPath}/SKILL.md`))

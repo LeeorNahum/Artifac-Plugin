@@ -2,7 +2,7 @@
   "name": "artifac",
   "displayName": "Artifac",
   "version": "1.0.0",
-  "description": "Create and update interactive web pages, apps, and sites on Artifac from this agent, with saved data and files. Bundles the Artifac skill and connects the Artifac MCP server.",
+  "description": "Create and update interactive web pages, apps, and sites on Artifac, with saved data and files. Bundles the Artifac skill and connects the Artifac MCP server.",
   "author": {
     "name": "Leeor Nahum",
     "url": "https://github.com/LeeorNahum"

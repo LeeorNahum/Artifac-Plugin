@@ -19,12 +19,33 @@ const scriptRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..")
 // other hosts.
 const portalFiles = (files) => files.filter((path) => !path.startsWith(".") && path !== "README.md" && path !== "SETUP.md")
 
-export async function stageOpenAi({ root = scriptRoot, output }) {
+// The listing links reviewers open. Each must answer before a package goes to review.
+const listingLinks = ["websiteURL", "supportURL", "privacyPolicyURL", "termsOfServiceURL"]
+
+async function answers(url) {
+  try {
+    const response = await fetch(url, { method: "GET", redirect: "follow", signal: AbortSignal.timeout(15_000) })
+    await response.body?.cancel()
+    return response.ok
+  } catch {
+    return false
+  }
+}
+
+export async function stageOpenAi({ root = scriptRoot, output, checkLink = answers }) {
   const plugin = JSON.parse(await readFile(resolve(root, "plugin.json"), "utf8"))
-  const demo = plugin.extensions?.["com.openai"]?.review?.demo_recording_url
+  const openai = plugin.extensions?.["com.openai"]
+  const demo = openai?.review?.demo_recording_url
   if (typeof demo !== "string" || !demo.startsWith("https://")) {
     throw new Error("OpenAI's MCP review needs extensions.com.openai.review.demo_recording_url in plugin.json: record the demo against production and add its https link first")
   }
+  const broken = []
+  for (const field of listingLinks) {
+    const url = openai?.interface?.[field]
+    if (!(await checkLink(url))) broken.push(`${field} (${url})`)
+  }
+  if (broken.length > 0) throw new Error(`These listing links do not answer yet: ${broken.join(", ")}`)
+
   const staged = await stagePackage({ root, output, select: portalFiles })
   const mcpPath = resolve(staged.output, "mcp.json")
   const mcp = JSON.parse(await readFile(mcpPath, "utf8"))
