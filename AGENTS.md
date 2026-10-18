@@ -16,7 +16,9 @@ no planning, no Context directory, and no copy of the skill.
   lists.
 - Read SETUP.md and RELEASING.md before changing how the plugin installs or ships.
 - Check every manifest field against the host's current first-party documentation or schema.
-  `npm run validate`, `npm test`, and `claude plugin validate --strict .` pass before any commit.
+  `npm run validate` and `npm test` pass before any commit. Before a release, also run Claude
+  Code's own check on what installs: stage the package and run `claude plugin validate --strict`
+  on its `.claude-plugin/plugin.json` and on `.claude-plugin/marketplace.json`.
 - Run the skill sync before committing, and regenerate `CLAUDE.md` with the claude-code-compat
   generator when an installed skill changes.
 - No em dashes, en dashes, or semicolons as prose joiners in anything written here, commit

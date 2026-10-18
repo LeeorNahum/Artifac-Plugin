@@ -12,7 +12,11 @@ submodule as ordinary files.
 2. Set the next semantic version in `plugin.json`. A new skill version changes what the plugin
    delivers, so it is a plugin release of at least the same size.
 3. Run `node scripts/sync-version.mjs --write`.
-4. Run `npm ci`, `npm run validate`, `npm test`, and `claude plugin validate --strict .`.
+4. Run `npm ci`, `npm run validate`, and `npm test`. Then stage the package with
+   `node scripts/stage-release.mjs --output <directory>` and run `claude plugin validate --strict`
+   on `<directory>/.claude-plugin/plugin.json` and on `.claude-plugin/marketplace.json`. The
+   repository root also holds maintainer files such as `CLAUDE.md` that never ship, so validate
+   the staged package rather than the root.
 5. Commit the complete release state and push it through review.
 6. Confirm the reviewed commit is the current `origin/main` tip, tag it as `vX.Y.Z`, and push the
    tag.
@@ -63,5 +67,5 @@ the bundled skill, the listing text, or the review cases needs a new version and
 
 Anthropic's directory lists a plugin from its GitHub repository. Submit from the developer portal
 at `https://claude.ai/directory/manage` with a paid claude.ai plan, after
-`claude plugin validate --strict .` passes. Point the submission at the `dist` branch when the
+the strict validation in step 4 passes. Point the submission at the `dist` branch when the
 portal asks for a ref, since that is the tree with the skill's files in place.
