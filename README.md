@@ -9,10 +9,7 @@ data, choose how to transfer each file, and recover from errors. The plugin ship
 Claude Code adapter (`.claude-plugin/`, `.mcp.json`). It runs no hooks.
 
 The skill lives in its own repository,
-[artifac-skill](https://github.com/LeeorNahum/artifac-skill), included here as a git submodule
-at `skills/artifac`. Each release commits the package, with the skill's files in place, to the
-`dist` branch, which is where the marketplace installs from, and attaches the same package to
-the GitHub release.
+[artifac-skill](https://github.com/LeeorNahum/artifac-skill), included here at `skills/artifac`.
 
 ## Tools
 
@@ -77,7 +74,8 @@ Start a new session after the update so the host rediscovers the skill and the s
 ## Before publishing
 
 `.gitmodules` points `skills/artifac` at the local checkout `../../Skill/artifac-skill` until the
-skill repository is public. Switch it with one line, `url = https://github.com/LeeorNahum/artifac-skill.git`,
-then run `git submodule sync -- skills/artifac` and delete this section.
+skill repository is public. Before adding a remote, switch it with one line,
+`url = https://github.com/LeeorNahum/artifac-skill.git`, then run
+`git submodule sync -- skills/artifac` and delete this section.
 
 Licensed under the [Apache License 2.0](LICENSE).

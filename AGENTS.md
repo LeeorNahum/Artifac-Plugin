@@ -1,8 +1,8 @@
 # Artifac Plugin
 
-This repository packages Artifac for agent hosts: the plugin manifests, the MCP connection to
-`https://mcp.artif.ac/mcp`, and the `artifac` skill. It is public and stays thin: no server code,
-no planning, no Context directory, and no copy of the skill.
+This repository packages Artifac for agent hosts. It holds only the plugin manifests, the MCP
+connection to `https://mcp.artif.ac/mcp`, the release scripts, and the `artifac` skill as a
+submodule. It is public.
 
 - The skill's source is the artifac-skill repository, a git submodule at `skills/artifac`. Change
   the skill there, release it, and move the submodule pointer here. Never edit files under
@@ -19,7 +19,8 @@ no planning, no Context directory, and no copy of the skill.
   `npm run validate` and `npm test` pass before any commit. Before a release, also run Claude
   Code's own check on what installs: stage the package and run `claude plugin validate --strict`
   on its `.claude-plugin/plugin.json` and on `.claude-plugin/marketplace.json`.
-- Run the skill sync before committing, and regenerate `CLAUDE.md` with the claude-code-compat
-  generator when an installed skill changes.
+- Before committing, bring the installed skills current with
+  `git submodule update --remote -- .agents/skills`, and when one changes, regenerate `CLAUDE.md`
+  with `npx --yes github:LeeorNahum/claude-code-compat-skill`.
 - No em dashes, en dashes, or semicolons as prose joiners in anything written here, commit
   messages included.
