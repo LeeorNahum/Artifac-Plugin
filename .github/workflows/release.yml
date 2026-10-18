@@ -1,0 +1,73 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Check out tagged source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          submodules: true
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+
+      - name: Validate package and tests
+        run: |
+          npm ci --ignore-scripts
+          npm run validate
+          npm test
+
+      - name: Verify reviewed main tag and source version
+        shell: bash
+        run: |
+          git fetch origin main --no-tags
+          tagged_commit="$(git rev-parse "${GITHUB_SHA}^{commit}")"
+          main_commit="$(git rev-parse "origin/main^{commit}")"
+          test "${tagged_commit}" = "${main_commit}"
+          version="$(node -p "require('./plugin.json').version")"
+          test "v${version}" = "${GITHUB_REF_NAME}"
+          echo "VERSION=${version}" >> "${GITHUB_ENV}"
+          skill_version="$(node --input-type=module -e 'import { readFileSync } from "node:fs"; import { parseSkillFrontmatter } from "./scripts/frontmatter.mjs"; console.log(parseSkillFrontmatter(readFileSync("skills/artifac/SKILL.md", "utf8")).data.metadata.version)')"
+          skill_commit="$(git -C skills/artifac rev-parse --short=12 HEAD)"
+          echo "SKILL_NOTE=Bundles the artifac skill ${skill_version} (artifac-skill ${skill_commit})." >> "${GITHUB_ENV}"
+
+      - name: Stage and archive published files
+        shell: bash
+        run: |
+          node scripts/stage-release.mjs --output "dist/artifac-${VERSION}"
+          cd dist
+          zip -X -r "artifac-${VERSION}.zip" "artifac-${VERSION}"
+          sha256sum "artifac-${VERSION}.zip" > "artifac-${VERSION}.zip.sha256"
+
+      - name: Publish tagged GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            "dist/artifac-${VERSION}.zip" \
+            "dist/artifac-${VERSION}.zip.sha256" \
+            --verify-tag \
+            --generate-notes \
+            --notes "${SKILL_NOTE}" \
+            --title "Artifac ${GITHUB_REF_NAME}"
