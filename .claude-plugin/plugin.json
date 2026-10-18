@@ -1,0 +1,21 @@
+{
+  "name": "artifac",
+  "displayName": "Artifac",
+  "version": "1.0.0",
+  "description": "Create and update interactive web pages, apps, and sites on Artifac from this agent, with saved data and files. Bundles the Artifac skill and connects the Artifac MCP server.",
+  "author": {
+    "name": "Leeor Nahum",
+    "url": "https://github.com/LeeorNahum"
+  },
+  "homepage": "https://artif.ac",
+  "repository": "https://github.com/LeeorNahum/Artifac-Plugin",
+  "license": "Apache-2.0",
+  "keywords": [
+    "artifac",
+    "artifacts",
+    "html",
+    "static-site",
+    "mcp",
+    "agent-skills"
+  ]
+}

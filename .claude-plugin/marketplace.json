@@ -1,0 +1,31 @@
+{
+  "name": "artifac",
+  "description": "The Artifac plugin: the Artifac skill and MCP server for building interactive artifacts on artif.ac.",
+  "owner": {
+    "name": "Leeor Nahum",
+    "url": "https://github.com/LeeorNahum"
+  },
+  "plugins": [
+    {
+      "name": "artifac",
+      "source": "./",
+      "description": "Create and update interactive web pages, apps, and sites on Artifac from this agent, with saved data and files. Bundles the Artifac skill and connects the Artifac MCP server.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Leeor Nahum",
+        "url": "https://github.com/LeeorNahum"
+      },
+      "homepage": "https://artif.ac",
+      "repository": "https://github.com/LeeorNahum/Artifac-Plugin",
+      "license": "Apache-2.0",
+      "keywords": [
+        "artifac",
+        "artifacts",
+        "html",
+        "static-site",
+        "mcp",
+        "agent-skills"
+      ]
+    }
+  ]
+}
