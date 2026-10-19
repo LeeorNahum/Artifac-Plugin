@@ -4,7 +4,7 @@ description: "Use when building, publishing, updating, or fixing an interactive 
 license: "Apache-2.0"
 metadata:
   author: "Leeor Nahum"
-  version: "1.0.1"
+  version: "1.1.0"
 ---
 
 # Artifac
@@ -27,11 +27,19 @@ Read [HTTP API and CLI](references/http-and-cli.md) before using either of those
 
 1. Call `list_workspaces` and pick one where `can_create_artifacts` is true. When the person has several and has not said which, ask: the workspace owns the artifact.
 2. Call `create_artifact` with `index.html` at the root and every other file the page needs, in one call.
-3. Give the person the returned `url`.
+3. Give the person the returned `url`, and say who can open it, from the returned `visibility`.
 
 Each `create_artifact` call makes another artifact. If one fails with `internal`, list the workspace's artifacts before trying again, since it may have landed.
 
-A new artifact opens only for its workspace's members. Sharing, public or unlisted visibility, subdomains, and restoring from Trash are set by an Owner in the Artifac app, and no tool changes them, so never promise a public link. `read_artifact` shows the current visibility and URLs.
+## Sharing Is The Person's
+
+A new artifact opens only for its workspace's members. Who can open an artifact and its subdomain are the person's choice, made by an Owner in the Artifac app: the artifact's visibility, its invitations and roles, and the workspace's members, invitations, and roles. Never change any of them yourself, by any route: not through a tool, a browser, computer use, or the app's own pages, even when the person asks for a page others can open. Instead:
+
+- Tell them who can open it now, from `visibility` (`workspace` is "Workspace only", `unlisted` is "Anyone with the link", `public` is "Public"), and the link: `site_url` when it is set, otherwise `url`.
+- Tell them where to change it: the artifact's settings page in the Artifac app, `https://app.artif.ac/{id}` (Settings and sharing in its library menu), under Sharing, "Who can open it". "Anyone with the link" lets people with the link open it, "Public" lets anyone, and "Invite someone to this artifact" adds a person by email. Its subdomain is set on the same page, under Subdomain.
+- Only Owners see those sections. When the person's `role` is not `owner`, tell them an Owner of the workspace has to make the change.
+
+Restoring from Trash happens on the workspace's Trash page, `https://app.artif.ac/workspaces/{workspace_id}/trash`, which only Owners see.
 
 ## Change Files
 
@@ -52,10 +60,20 @@ Give each file exactly one of these sources, chosen by where its bytes are:
 | --- | --- |
 | Text (HTML, CSS, JavaScript, JSON, SVG, Markdown) small enough to send inline | `content`, its full UTF-8 text |
 | Bytes at a public `https://` URL that answers with the file itself | `source_url`, which Artifac fetches |
-| On disk, where you can run commands | `npx artifac upload --artifact <id> <file>` (or `--workspace <id>` for a new artifact), then its `upload_id`. For a folder, send it whole with `npx artifac create` or `update` |
-| Attached to the conversation in ChatGPT | `attachment_index`, its position in `fileParams`, which ChatGPT fills with the attached files |
+| In `fileParams`, from a host that supports it (below) | `attachment_index`, the file's position in `fileParams` |
+| On the person's computer, when the host's `fileParams` cannot take it | `npx artifac upload --artifact <id> <file>` (or `--workspace <id>` for a new artifact), then its `upload_id`. For a folder, send it whole with `npx artifac create` or `update` |
 
-Binary files (raster images, fonts, audio, video, PDF, archives) never travel as `content`. When none of the rows fits, as when a person attached a file in a host that gives tools no access to attachment bytes and you cannot run commands, stop and say so. Offer the routes that work: a public URL for the file, running the CLI, or pasting a text file's text. Never put base64 in `content` or a `data:` URL, and never pass a local path, sandbox path, or host file ID as `source_url`. `transfer_unsupported` names this case.
+`create_artifact` and `update_artifact` declare `fileParams` through OpenAI's `openai/fileParams` tool metadata, and what it carries depends on the host:
+
+- **ChatGPT** fills `fileParams` with the files the person attached to the conversation.
+- **Codex with Artifac connected as a ChatGPT app** shows `fileParams` to you as local file paths. List each local file's path there, and Codex uploads it before the call reaches Artifac. If Codex cannot upload a file, use the CLI.
+- **A host that does not honor `openai/fileParams`** leaves it empty, so use the CLI. Never build `fileParams` entries yourself there, and send a public file as `source_url`.
+
+Set each file's `attachment_index` to its position in `fileParams`. An index into an empty `fileParams` answers `transfer_unsupported`, and one past its end answers `validation_failed`.
+
+For a file on the person's computer, the CLI is the route. Run `npx artifac upload` when you can run commands, or ask the person to run it and give you the `upload_id` it prints. The CLI needs one sign-in, which is the person's: whenever it tells you to run `npx artifac login`, ask the person to run it and wait for them, and never start the sign-in yourself.
+
+Binary files (raster images, fonts, audio, video, PDF, archives) never travel as `content`. When none of the rows fits, as when a person attached a file in a host that gives tools no access to attachment bytes and you cannot run commands, stop and say so. Offer every route that works: the CLI upload, a public URL for the file, or pasting a text file's text. Never put base64 in `content` or a `data:` URL, and never pass a local path, sandbox path, or host file ID as `source_url`. `transfer_unsupported` names this case.
 
 An upload is used once, belongs to the person and the artifact or workspace it names, and expires, so one made with the CLI works in that person's MCP calls for the same target.
 

@@ -4,8 +4,8 @@ Every refusal carries `code`, `message`, `hint`, and sometimes `details`. A fail
 
 | Code | What to do |
 | --- | --- |
-| `unauthorized` | The connection's sign-in expired or was revoked. Ask the person to reconnect Artifac through the host's MCP authentication, or run `npx artifac login` for the CLI. Never ask for a password or token in chat |
-| `forbidden` | The person's role does not allow this here, such as a Viewer changing code. Say which role it needs. Sharing, visibility, subdomains, and Trash are managed in the Artifac app, never through a tool |
+| `unauthorized` | The connection's sign-in expired or was revoked. Ask the person to reconnect Artifac through the host's MCP authentication, or, for the CLI, ask them to run `npx artifac login` and wait. Never ask for a password or token in chat |
+| `forbidden` | The person's role does not allow this here, such as a Viewer changing code. Say which role it needs. Sharing, visibility, subdomains, workspace members, and Trash are the person's to manage in the Artifac app, never yours by any route, a browser included |
 | `not_found` | The ID or path does not exist, or the person cannot see it. List workspaces or artifacts, or read the manifest, for current IDs and paths. Do not guess IDs |
 | `validation_failed` | An argument or file is malformed. `details.issues` names each field and rule. Fix those and send again |
 | `invalid_path` | Rename the path to a relative, normalized one. The message and `details.rule` name the rule it broke |

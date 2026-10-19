@@ -5,16 +5,29 @@ key, custom header, environment variable, or project file.
 
 ## Sign in
 
-The first time your agent uses Artifac, the host asks you to sign in. It opens an Artifac sign-in
-page in your browser, where you sign in and approve the connection. If the Artifac tools already
-appear in your agent, you are connected and do not need to sign in again.
+Signing in opens an Artifac page in your browser, where you sign in and approve the connection.
+Most hosts start it the first time your agent uses Artifac. If the Artifac tools already appear in
+your agent, you are connected and do not need to sign in again.
 
-In Claude Code, you can also start it yourself: open `/mcp`, select `plugin:artifac:artifac`, and
-choose **Authenticate**. If Claude Code runs somewhere that cannot receive the browser's return to
-localhost, use the completion option Claude Code offers, and paste the full callback URL only when
-it asks for it.
-
-In Codex, run `codex mcp login artifac`.
+- **Claude Code**: to start it yourself, open `/mcp`, select `plugin:artifac:artifac`, and choose
+  **Authenticate**. If Claude Code runs somewhere that cannot receive the browser's return to
+  localhost, use the completion option Claude Code offers, and paste the full callback URL only
+  when it asks for it.
+- **Claude app**: open the Artifac plugin from Customize, then Plugins, and connect it on its
+  Connectors tab. The skill works as soon as the plugin is installed, and the Artifac tools appear
+  once you connect.
+- **Codex**: run `codex mcp login artifac`. In the ChatGPT desktop app, open Settings, then MCP
+  servers, and choose **Authenticate** beside `artifac`.
+- **Gemini CLI**: run `/mcp auth artifac`.
+- **Cursor**: the `artifac` server appears among the MCP servers in Customize, where you can start
+  the sign-in if Cursor has not asked already.
+- **VS Code**: run **MCP: List Servers** from the Command Palette and select `artifac` to start the
+  sign-in if VS Code has not asked already.
+- **Devin Desktop**: for local sessions, run `devin mcp login artifac` in a terminal with the
+  Devin CLI. For Devin's cloud sessions, open the Artifac plugin in Devin's Customize page and
+  connect its MCP server from the plugin's details.
+- **ChatGPT on the web**: with OAuth set when you create the plugin, ChatGPT opens the Artifac
+  sign-in. To reconnect, open the plugin in ChatGPT Plugins and connect it again.
 
 ## Check the connection
 

@@ -4,7 +4,7 @@ Both act for one signed-in person with the same rules and error codes as the MCP
 
 ## CLI
 
-`npx artifac` needs Node.js. The person signs in once with `npx artifac login`, which opens their browser, and you never handle their credentials. `npx artifac --help` lists every command and option.
+`npx artifac` needs Node.js. Signing in is the person's: ask them to run `npx artifac login`, which opens their browser, and wait for them to finish. Never run `login` yourself, even when you can run commands, and never handle their credentials. `npx artifac --help` lists every command and option.
 
 | Command | Does |
 | --- | --- |
