@@ -15,8 +15,8 @@ import { stagePackage } from "./stage-release.mjs"
 
 const scriptRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..")
 
-// What the portal reads. The Claude Code and Gemini CLI adapters and the setup
-// notes are for other hosts.
+// What the portal reads. The Claude plugin manifests, the Gemini CLI extension
+// manifest, and the setup notes are for other hosts.
 const otherHostFiles = new Set(["README.md", "SETUP.md", "gemini-extension.json"])
 const portalFiles = (files) => files.filter((path) => !path.startsWith(".") && !otherHostFiles.has(path))
 

@@ -192,9 +192,9 @@ function validateOpenAiListing(openai, errors) {
   }
 }
 
-// Gemini CLI reads gemini-extension.json, whose documented fields are name,
-// version, description, and mcpServers, and reaches a streamable HTTP server
-// through httpUrl. It finds the skill in skills/ without a declaration.
+// Gemini CLI reads gemini-extension.json and reaches a streamable HTTP server
+// through httpUrl. It finds the skill in skills/ without a declaration, so this
+// package declares only name, version, description, and the one server.
 function validateGeminiExtension(gemini, plugin, errors) {
   if (!gemini) return
   if (!hasExactKeys(gemini, ["name", "version", "description", "mcpServers"])) {

@@ -225,7 +225,7 @@ test("a Gemini extension with credentials or another transport fails validation"
   assert.ok(result.errors.includes("gemini-extension.json artifac server must declare only httpUrl"))
 })
 
-test("a Gemini extension with an undocumented field or a different name fails validation", async (context) => {
+test("a Gemini extension with an unexpected field or a different name fails validation", async (context) => {
   const candidate = await copyCandidate(context)
   await editJson(resolve(candidate, "gemini-extension.json"), (extension) => {
     extension.name = "artifac-gemini"

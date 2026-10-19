@@ -50,11 +50,13 @@ The Claude app, Cursor, and VS Code read the same marketplace entry, so they als
 
 ## Why the release has one asset
 
+Never add a second asset to a release. Gemini CLI would then install without the skill.
+
 Gemini CLI installs `https://github.com/LeeorNahum/Artifac-Plugin` from the latest GitHub release
-rather than from a clone. It takes the release's asset when there is exactly one, and otherwise
-falls back to the tagged source, where `skills/artifac` is an empty submodule. So the release
-carries only the ZIP, whose single top-level folder holds `gemini-extension.json` beside the
-materialized skill, and a second asset would break Gemini installs.
+rather than from a clone. It takes the release's asset only when there is exactly one, and
+otherwise falls back to the tagged source, where `skills/artifac` is an empty submodule. The ZIP's
+single top-level folder holds `gemini-extension.json` beside the materialized skill, which is the
+layout Gemini CLI unpacks.
 
 To try a candidate locally, stage it with `node scripts/stage-release.mjs --output <directory>`
 and start Claude Code with `claude --plugin-dir <directory>`, or install it into Gemini CLI with

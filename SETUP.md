@@ -5,21 +5,22 @@ key, custom header, environment variable, or project file.
 
 ## Sign in
 
-The first time your agent uses Artifac, the host asks you to sign in. It opens an Artifac sign-in
-page in your browser, where you sign in and approve the connection. If the Artifac tools already
-appear in your agent, you are connected and do not need to sign in again.
+Signing in opens an Artifac page in your browser, where you sign in and approve the connection.
+Most hosts start it the first time your agent uses Artifac. If the Artifac tools already appear in
+your agent, you are connected and do not need to sign in again.
 
-In Claude Code, you can also start it yourself: open `/mcp`, select `plugin:artifac:artifac`, and
-choose **Authenticate**. If Claude Code runs somewhere that cannot receive the browser's return to
-localhost, use the completion option Claude Code offers, and paste the full callback URL only when
-it asks for it.
-
-In Codex, run `codex mcp login artifac`.
-
-In Gemini CLI, run `/mcp auth artifac`.
-
-In the Claude app, open the Artifac plugin from Customize, then Plugins, and connect it on its
-Connectors tab. Its skill loads either way, but its tools wait for the connection.
+- **Claude Code**: to start it yourself, open `/mcp`, select `plugin:artifac:artifac`, and choose
+  **Authenticate**. If Claude Code runs somewhere that cannot receive the browser's return to
+  localhost, use the completion option Claude Code offers, and paste the full callback URL only
+  when it asks for it.
+- **Claude app**: open the Artifac plugin from Customize, then Plugins, and connect it on its
+  Connectors tab. The skill works as soon as the plugin is installed, and the Artifac tools appear
+  once you connect.
+- **Codex**: run `codex mcp login artifac`. In the ChatGPT desktop app, open Settings, then MCP
+  servers, and choose **Authenticate** beside `artifac`.
+- **Gemini CLI**: run `/mcp auth artifac`.
+- **Cursor and VS Code**: the `artifac` server appears in the editor's list of MCP servers, where
+  you can start the sign-in if the editor has not asked already.
 
 ## Check the connection
 
