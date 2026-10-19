@@ -1,6 +1,6 @@
 {
   "name": "artifac",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Create and update interactive web pages, apps, and sites on Artifac, with saved data and files. Bundles the Artifac skill and connects the Artifac MCP server.",
   "mcpServers": {
     "artifac": {
