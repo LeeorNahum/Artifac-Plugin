@@ -15,9 +15,10 @@ import { stagePackage } from "./stage-release.mjs"
 
 const scriptRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..")
 
-// What the portal reads. The Claude Code adapter and the setup notes are for
-// other hosts.
-const portalFiles = (files) => files.filter((path) => !path.startsWith(".") && path !== "README.md" && path !== "SETUP.md")
+// What the portal reads. The Claude Code and Gemini CLI adapters and the setup
+// notes are for other hosts.
+const otherHostFiles = new Set(["README.md", "SETUP.md", "gemini-extension.json"])
+const portalFiles = (files) => files.filter((path) => !path.startsWith(".") && !otherHostFiles.has(path))
 
 // The listing links reviewers open. Each must answer before a package goes to review.
 const listingLinks = ["websiteURL", "supportURL", "privacyPolicyURL", "termsOfServiceURL"]

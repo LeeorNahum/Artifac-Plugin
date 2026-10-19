@@ -25,12 +25,11 @@ The tag workflow checks out the submodule, rejects a tag that does not resolve t
 `origin/main` tip or differs from `plugin.json`, and refuses a skill checkout that differs from
 the recorded commit. It then:
 
-- Stages the contracted files with the skill materialized, and creates a ZIP and SHA-256
-  checksum.
+- Stages the contracted files with the skill materialized, and creates a ZIP of them.
 - Commits the staged package to the `dist` branch on top of the previous `dist` commit, with
   `scripts/dist-commit.mjs`, and pushes it without force.
-- Publishes the ZIP and checksum to the GitHub release, whose notes name the skill version and
-  commit.
+- Publishes the ZIP as the GitHub release's only asset, with notes that name the skill version
+  and commit. GitHub records the asset's SHA-256 digest on the release.
 
 It does not submit to or alter any directory or portal.
 
@@ -46,8 +45,20 @@ marketplace entry therefore names `dist` as its source, and `dist` is written on
 workflow. Never edit or force-push it by hand. Users see a release once `dist` moves, so nothing
 installs until the first release has run.
 
+The Claude app, Cursor, and VS Code read the same marketplace entry, so they also install from
+`dist`.
+
+## Why the release has one asset
+
+Gemini CLI installs `https://github.com/LeeorNahum/Artifac-Plugin` from the latest GitHub release
+rather than from a clone. It takes the release's asset when there is exactly one, and otherwise
+falls back to the tagged source, where `skills/artifac` is an empty submodule. So the release
+carries only the ZIP, whose single top-level folder holds `gemini-extension.json` beside the
+materialized skill, and a second asset would break Gemini installs.
+
 To try a candidate locally, stage it with `node scripts/stage-release.mjs --output <directory>`
-and start Claude Code with `claude --plugin-dir <directory>`.
+and start Claude Code with `claude --plugin-dir <directory>`, or install it into Gemini CLI with
+`gemini extensions install <directory>`.
 
 ## OpenAI's plugin portal
 

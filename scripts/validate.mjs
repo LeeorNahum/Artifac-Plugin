@@ -20,7 +20,7 @@ const serverUrl = "https://mcp.artif.ac/mcp"
 // Hosts install from a Git clone, and some copy the plugin without fetching
 // submodules, so the marketplace entry installs from the dist branch, where
 // the release workflow commits the package with the skill as ordinary files.
-// Claude Code and Codex both read this entry.
+// Claude Code, the Claude app, Codex, Cursor, and VS Code all read this entry.
 const distSource = {
   source: "url",
   url: "https://github.com/LeeorNahum/Artifac-Plugin.git",
@@ -53,6 +53,10 @@ const expectedVersionContract = {
     },
     {
       path: ".claude-plugin/plugin.json",
+      jsonPointer: "/version",
+    },
+    {
+      path: "gemini-extension.json",
       jsonPointer: "/version",
     },
   ],
@@ -188,6 +192,24 @@ function validateOpenAiListing(openai, errors) {
   }
 }
 
+// Gemini CLI reads gemini-extension.json, whose documented fields are name,
+// version, description, and mcpServers, and reaches a streamable HTTP server
+// through httpUrl. It finds the skill in skills/ without a declaration.
+function validateGeminiExtension(gemini, plugin, errors) {
+  if (!gemini) return
+  if (!hasExactKeys(gemini, ["name", "version", "description", "mcpServers"])) {
+    errors.push("gemini-extension.json must declare exactly name, version, description, and mcpServers")
+  }
+  addEqual(errors, "Gemini extension name", gemini.name, plugin?.name)
+  addEqual(errors, "Gemini extension description", gemini.description, plugin?.description)
+  if (!isDeepStrictEqual(Object.keys(gemini.mcpServers ?? {}), [pluginName])) {
+    errors.push(`gemini-extension.json must declare exactly one server, ${pluginName}`)
+  }
+  const server = gemini.mcpServers?.[pluginName]
+  if (!hasExactKeys(server, ["httpUrl"])) errors.push(`gemini-extension.json ${pluginName} server must declare only httpUrl`)
+  addEqual(errors, "gemini-extension.json server URL", server?.httpUrl, serverUrl)
+}
+
 async function validateSkill(root, skill, errors) {
   const directory = resolve(root, skill.path)
   if (!(await exists(resolve(directory, "SKILL.md")))) {
@@ -229,6 +251,7 @@ export async function validatePackage(root = scriptRoot) {
   const claudePlugin = await readJson(root, ".claude-plugin/plugin.json", errors)
   const claudeMarketplace = await readJson(root, ".claude-plugin/marketplace.json", errors)
   const claudeMcp = await readJson(root, ".mcp.json", errors)
+  const gemini = await readJson(root, "gemini-extension.json", errors)
   const contract = await readJson(root, "scripts/release-contract.json", errors)
   const version = plugin?.version
 
@@ -290,6 +313,7 @@ export async function validatePackage(root = scriptRoot) {
   if ((claudeMarketplace?.plugins?.length ?? 0) !== 1) errors.push(".claude-plugin/marketplace.json must list exactly one plugin")
 
   validateOpenAiListing(plugin?.extensions?.["com.openai"], errors)
+  validateGeminiExtension(gemini, plugin, errors)
 
   if (!hasExactKeys(contract, ["version", "skill", "publishedFiles"])) {
     errors.push("release-contract.json contains missing or unknown top-level fields")
@@ -335,7 +359,7 @@ export async function validatePackage(root = scriptRoot) {
 
     const claudeFiles = (await walkFiles(resolve(root, ".claude-plugin"))).map((path) => `.claude-plugin/${path}`)
     const assetFiles = (await walkFiles(resolve(root, "assets"))).map((path) => `assets/${path}`)
-    const requiredFiles = [".mcp.json", "LICENSE", "README.md", "SETUP.md", "mcp.json", "plugin.json", ...assetFiles, ...claudeFiles]
+    const requiredFiles = [".mcp.json", "LICENSE", "README.md", "SETUP.md", "gemini-extension.json", "mcp.json", "plugin.json", ...assetFiles, ...claudeFiles]
       .sort(compareText)
     if (JSON.stringify(published) !== JSON.stringify(requiredFiles)) {
       errors.push("publishedFiles must exactly match every user runtime component outside the skill")
@@ -362,7 +386,7 @@ export async function validatePackage(root = scriptRoot) {
 
 function printHelp() {
   process.stdout.write(`Usage: node scripts/validate.mjs\n\n`)
-  process.stdout.write(`Validate plugin manifests, endpoint parity, the OpenAI listing, the skill submodule, and release inventory.\n`)
+  process.stdout.write(`Validate plugin manifests, endpoint parity, the OpenAI listing, the Gemini extension, the skill submodule, and release inventory.\n`)
 }
 
 async function main() {

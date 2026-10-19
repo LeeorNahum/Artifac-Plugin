@@ -205,6 +205,49 @@ test("a different server address fails validation", async (context) => {
   assert.ok(result.errors.some((error) => error.startsWith(".mcp.json server URL")))
 })
 
+test("a Gemini extension pointing anywhere but the Artifac server fails validation", async (context) => {
+  const candidate = await copyCandidate(context)
+  await editJson(resolve(candidate, "gemini-extension.json"), (extension) => { extension.mcpServers.artifac.httpUrl = "https://mcp.example.com/mcp" })
+
+  const result = await validatePackage(candidate)
+  assert.equal(result.ok, false)
+  assert.ok(result.errors.some((error) => error.startsWith("gemini-extension.json server URL")))
+})
+
+test("a Gemini extension with credentials or another transport fails validation", async (context) => {
+  const candidate = await copyCandidate(context)
+  await editJson(resolve(candidate, "gemini-extension.json"), (extension) => {
+    extension.mcpServers.artifac.headers = { Authorization: "Bearer placeholder" }
+  })
+
+  const result = await validatePackage(candidate)
+  assert.equal(result.ok, false)
+  assert.ok(result.errors.includes("gemini-extension.json artifac server must declare only httpUrl"))
+})
+
+test("a Gemini extension with an undocumented field or a different name fails validation", async (context) => {
+  const candidate = await copyCandidate(context)
+  await editJson(resolve(candidate, "gemini-extension.json"), (extension) => {
+    extension.name = "artifac-gemini"
+    extension.contextFileName = "GEMINI.md"
+  })
+
+  const result = await validatePackage(candidate)
+  assert.equal(result.ok, false)
+  assert.ok(result.errors.includes("gemini-extension.json must declare exactly name, version, description, and mcpServers"))
+  assert.ok(result.errors.some((error) => error.startsWith("Gemini extension name")))
+})
+
+test("Gemini extension version drift fails validation and version generation repairs it", async (context) => {
+  const candidate = await copyCandidate(context)
+  await editJson(resolve(candidate, "gemini-extension.json"), (extension) => { extension.version = "0.0.0" })
+  assert.ok((await validatePackage(candidate)).errors.some((error) => error.includes("gemini-extension.json version")))
+
+  const sync = await synchronizeVersions({ root: candidate, write: true })
+  assert.deepEqual(sync.changed, ["gemini-extension.json"])
+  assert.equal((await validatePackage(candidate)).ok, true)
+})
+
 test("a hooks declaration fails validation", async (context) => {
   const candidate = await copyCandidate(context)
   await editJson(resolve(candidate, ".claude-plugin/plugin.json"), (manifest) => { manifest.hooks = "./.claude-plugin/hooks.json" })
@@ -312,6 +355,7 @@ test("release staging materializes the skill from its submodule and nothing else
 
   assert.deepEqual(await walk(output), [...staged.files].sort(compareText))
   assert.equal(staged.version, plugin.version)
+  assert.ok(staged.files.includes("gemini-extension.json"), "Gemini CLI reads its manifest from the package root")
   assert.ok(staged.files.includes(`${skillPath}/SKILL.md`))
   assert.ok(staged.files.includes(`${skillPath}/LICENSE`))
   for (const path of staged.files.filter((file) => file.startsWith(`${skillPath}/`))) {
@@ -368,6 +412,15 @@ test("release publishing requires the tag to resolve to the current main tip and
   assert.match(await readFile(resolve(root, ".github/workflows/validate.yml"), "utf8"), /submodules: true/)
 })
 
+test("the release carries the package ZIP as its only asset, which Gemini CLI installs", async () => {
+  const workflow = await readFile(resolve(root, ".github/workflows/release.yml"), "utf8")
+  const create = workflow.slice(workflow.indexOf("gh release create"))
+  const command = create.slice(0, create.search(/\n\s*\n|\n\s*-\s+name:|$/))
+  const assets = command.split("\n").map((line) => line.trim()).filter((line) => /^"[^"]+"\s*\\?$/.test(line) && !line.includes("GITHUB_REF_NAME"))
+  assert.deepEqual(assets, ['"dist/artifac-${VERSION}.zip" \\'])
+  assert.match(workflow, /zip -X -r "artifac-\$\{VERSION\}\.zip" "artifac-\$\{VERSION\}"/)
+})
+
 test("OpenAI staging refuses a listing without a demo recording", async (context) => {
   const output = resolve(await temporary(context, "artifac-openai-"), "package")
   await assert.rejects(stageOpenAi({ root, output, checkLink: async () => true }), /demo_recording_url/)
@@ -404,6 +457,9 @@ test("OpenAI staging adds the client registration setting, carries the skill, an
   assert.ok(staged.files.includes("plugin.json"))
   assert.ok(staged.files.includes(`${skillPath}/SKILL.md`))
   assert.ok(!staged.files.some((path) => path.startsWith(".")))
+  for (const otherHost of ["README.md", "SETUP.md", "gemini-extension.json"]) {
+    assert.ok(!staged.files.includes(otherHost), `${otherHost} is not part of the portal package`)
+  }
   const stagedMcp = JSON.parse(await readFile(resolve(output, "mcp.json"), "utf8"))
   assert.deepEqual(stagedMcp.mcpServers.artifac.extensions, {
     "com.openai": { auth: { type: "oauth", client: { mode: "dcr" } } },
