@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "artifac",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Create and update interactive web pages, apps, and sites on Artifac, with saved data and files. Bundles the Artifac skill and connects the Artifac MCP server.",
   "author": {
     "name": "Leeor Nahum",
@@ -23,7 +23,7 @@
       "interface": {
         "displayName": "Artifac",
         "shortDescription": "Publish interactive web pages",
-        "longDescription": "Artifac is a home for interactive static artifacts: pages, small apps, games, dashboards, and sites made of HTML, CSS, and JavaScript, each at its own artif.ac link. With this plugin, ChatGPT can create an artifact in one of your workspaces, read and edit its files, add images and other files you attach, and set up saved data that visitors share or keep as their own. Every change is live at the artifact's link as soon as it is saved. A new artifact opens only for your workspace's members, and a workspace Owner decides in the Artifac app who else can see it and whether it gets a short address on artif.ac.",
+        "longDescription": "Artifac is a home for interactive static artifacts: pages, small apps, games, dashboards, and sites made of HTML, CSS, and JavaScript, each at its own artif.ac link. With this plugin, ChatGPT can create an artifact in one of your workspaces, read and edit its files, add images and other files you attach, and set up saved data that visitors share or keep as their own. Every change is live at the artifact's link as soon as it is saved. A new artifact opens only for your workspace's members, and an Owner decides in the Artifac app who else can see it and whether it gets its own subdomain of artif.ac.",
         "developerName": "Leeor Nahum",
         "category": "Productivity",
         "capabilities": [],
@@ -75,8 +75,8 @@
           ],
           "negative": [
             {
-              "description": "Visibility and addresses are set only in the Artifac app. No tool changes them, so ChatGPT says an Owner does this in the Artifac app and does not claim it happened.",
-              "prompt": "Make my tip calculator on Artifac public and give it the address tips.artif.ac."
+              "description": "Visibility and subdomains are set only in the Artifac app. No tool changes them, so ChatGPT says an Owner does this in the Artifac app and does not claim it happened.",
+              "prompt": "Make my tip calculator on Artifac public and give it the subdomain tips.artif.ac."
             },
             {
               "description": "Artifac hosts static files only. ChatGPT explains that it cannot run server code there and offers a page that works in the browser instead, without creating anything until the person agrees.",

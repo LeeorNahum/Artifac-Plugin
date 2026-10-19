@@ -15,7 +15,7 @@
         "ref": "dist"
       },
       "description": "Create and update interactive web pages, apps, and sites on Artifac, with saved data and files. Bundles the Artifac skill and connects the Artifac MCP server.",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "author": {
         "name": "Leeor Nahum",
         "url": "https://github.com/LeeorNahum"
