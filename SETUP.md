@@ -24,11 +24,10 @@ your agent, you are connected and do not need to sign in again.
 - **VS Code**: run **MCP: List Servers** from the Command Palette and select `artifac` to start the
   sign-in if VS Code has not asked already.
 - **Devin Desktop**: for local sessions, run `devin mcp login artifac` in a terminal with the
-  Devin CLI. For Devin's cloud sessions, open the Artifac
-  plugin in Devin's Customize page and connect its MCP server from the plugin's details.
+  Devin CLI. For Devin's cloud sessions, open the Artifac plugin in Devin's Customize page and
+  connect its MCP server from the plugin's details.
 - **ChatGPT on the web**: with OAuth set when you create the plugin, ChatGPT opens the Artifac
-  sign-in. To
-  reconnect, open the plugin in ChatGPT Plugins and connect it again.
+  sign-in. To reconnect, open the plugin in ChatGPT Plugins and connect it again.
 
 ## Check the connection
 

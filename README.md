@@ -50,8 +50,8 @@ Inside a Claude Code session, `/plugin marketplace add LeeorNahum/Artifac-Plugin
 ## Sign in
 
 Most hosts ask you to sign in to Artifac the first time your agent uses it. The Claude app and
-Devin Desktop wait until you connect the plugin yourself. [SETUP.md](SETUP.md) has each host's steps and how to check
-the connection.
+Devin Desktop wait until you connect the plugin yourself. [SETUP.md](SETUP.md) has each host's
+steps and how to check the connection.
 
 The connection reaches every workspace you belong to, now or later, and artifacts shared with you
 individually, with your current role in each.
@@ -72,7 +72,8 @@ gemini extensions update artifac
 ```
 
 In the Claude app, select Check for updates on the marketplace, or turn on Sync automatically.
-ChatGPT on the web reads the tools from the live server, so it has nothing to update.
+In ChatGPT on the web, open the plugin in ChatGPT Plugins and select Refresh to pick up changed
+tools.
 
 Start a new session after the update so the host rediscovers the skill and the server's tools.
 
