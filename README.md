@@ -39,17 +39,18 @@ Inside a Claude Code session, `/plugin marketplace add LeeorNahum/Artifac-Plugin
   settings, then Edit manifest, and add
   `{ "source": "github", "repo": "LeeorNahum/Artifac-Plugin", "ref": "dist" }` to
   `requiredPlugins` in your Personal scope.
-- **ChatGPT on the web**: open [ChatGPT Plugins](https://chatgpt.com/plugins), choose the plus
-  button, then Add custom MCP server. Give it the name Artifac, enter `https://mcp.artif.ac/mcp`
-  as the server URL, choose OAuth for authentication, and choose Create as a plugin. This adds
-  the Artifac tools without the skill, and your account or workspace settings decide whether the
-  option is offered.
-- **Any other MCP client**: add `https://mcp.artif.ac/mcp` as a remote Streamable HTTP server.
+- **ChatGPT on the web**, where your account or workspace offers custom MCP servers: open
+  [ChatGPT Plugins](https://chatgpt.com/plugins), choose the plus button, then Add custom MCP
+  server. Give it the name Artifac, enter `https://mcp.artif.ac/mcp` as the server URL, set its
+  authentication to OAuth, and choose Create as a plugin. This adds the tools but not the skill.
+- **Any other MCP client**: add `https://mcp.artif.ac/mcp` as a remote Streamable HTTP server. If
+  the client loads Agent Skills, also install
+  [artifac-skill](https://github.com/LeeorNahum/artifac-skill).
 
 ## Sign in
 
-Most hosts ask you to sign in to Artifac the first time your agent uses it. The Claude app waits
-until you connect the plugin yourself. [SETUP.md](SETUP.md) has each host's steps and how to check
+Most hosts ask you to sign in to Artifac the first time your agent uses it. The Claude app and
+Devin Desktop wait until you connect the plugin yourself. [SETUP.md](SETUP.md) has each host's steps and how to check
 the connection.
 
 The connection reaches every workspace you belong to, now or later, and artifacts shared with you
@@ -71,6 +72,7 @@ gemini extensions update artifac
 ```
 
 In the Claude app, select Check for updates on the marketplace, or turn on Sync automatically.
+ChatGPT on the web reads the tools from the live server, so it has nothing to update.
 
 Start a new session after the update so the host rediscovers the skill and the server's tools.
 

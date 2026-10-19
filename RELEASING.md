@@ -46,7 +46,7 @@ workflow. Never edit or force-push it by hand. Users see a release once `dist` m
 installs until the first release has run.
 
 The Claude app, Cursor, and VS Code read the same marketplace entry, so they also install from
-`dist`.
+`dist`. Devin Desktop names the `dist` ref in its own manifest entry.
 
 ## Why the release has one asset
 

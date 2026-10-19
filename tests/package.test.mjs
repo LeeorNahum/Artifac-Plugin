@@ -434,6 +434,8 @@ test("the release carries the package ZIP as its only asset, which Gemini CLI in
   assert.match(workflow, /zip -X -r "artifac-\$\{VERSION\}\.zip" "artifac-\$\{VERSION\}"/)
   assert.match(workflow, /test "\$\(gh release view "\$\{GITHUB_REF_NAME\}" --json assets --jq '\.assets \| length'\)" = 1/)
   assert.doesNotMatch(workflow, /gh release upload/)
+  const check = workflow.indexOf("--jq '.assets | length'")
+  assert.ok(workflow.indexOf("--draft \\") < check && check < workflow.indexOf("--draft=false"), "the release is checked as a draft and published after")
 })
 
 test("OpenAI staging refuses a listing without a demo recording", async (context) => {

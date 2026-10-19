@@ -19,10 +19,16 @@ your agent, you are connected and do not need to sign in again.
 - **Codex**: run `codex mcp login artifac`. In the ChatGPT desktop app, open Settings, then MCP
   servers, and choose **Authenticate** beside `artifac`.
 - **Gemini CLI**: run `/mcp auth artifac`.
-- **Cursor and VS Code**: the `artifac` server appears in the editor's list of MCP servers, where
-  you can start the sign-in if the editor has not asked already.
-- **Devin Desktop**: open the Artifac plugin in Devin's Customize page and connect its MCP server
-  from the plugin's details.
+- **Cursor**: the `artifac` server appears among the MCP servers in Customize, where you can start
+  the sign-in if Cursor has not asked already.
+- **VS Code**: run **MCP: List Servers** from the Command Palette and select `artifac` to start the
+  sign-in if VS Code has not asked already.
+- **Devin Desktop**: for local sessions, run `devin mcp login artifac` in a terminal with the
+  Devin CLI. For Devin's cloud sessions, open the Artifac
+  plugin in Devin's Customize page and connect its MCP server from the plugin's details.
+- **ChatGPT on the web**: with OAuth set when you create the plugin, ChatGPT opens the Artifac
+  sign-in. To
+  reconnect, open the plugin in ChatGPT Plugins and connect it again.
 
 ## Check the connection
 
