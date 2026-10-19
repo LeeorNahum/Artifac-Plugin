@@ -21,6 +21,8 @@ your agent, you are connected and do not need to sign in again.
 - **Gemini CLI**: run `/mcp auth artifac`.
 - **Cursor and VS Code**: the `artifac` server appears in the editor's list of MCP servers, where
   you can start the sign-in if the editor has not asked already.
+- **Devin Desktop**: open the Artifac plugin in Devin's Customize page and connect its MCP server
+  from the plugin's details.
 
 ## Check the connection
 

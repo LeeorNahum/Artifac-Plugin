@@ -16,7 +16,7 @@ In a terminal:
 claude plugin marketplace add LeeorNahum/Artifac-Plugin
 claude plugin install artifac@artifac
 
-# Codex, for the CLI and for Codex in the ChatGPT desktop app
+# Codex, for Codex CLI and the ChatGPT desktop app
 codex plugin marketplace add LeeorNahum/Artifac-Plugin
 codex plugin add artifac@artifac
 
@@ -29,15 +29,21 @@ Inside a Claude Code session, `/plugin marketplace add LeeorNahum/Artifac-Plugin
 
 - **Claude app** (claude.ai, the desktop app, and Cowork): open Customize, then Plugins. Choose
   Add, then Add marketplace, enter `LeeorNahum/Artifac-Plugin`, and install Artifac from it.
-- **Cursor**: open Customize, then Plugins. Choose Add Marketplace, then Import from Github,
-  paste `https://github.com/LeeorNahum/Artifac-Plugin`, and install Artifac from it.
+- **Cursor**: open Customize, then Plugins, and choose Browse Marketplace. Choose Add Marketplace,
+  then Import from Github, paste `https://github.com/LeeorNahum/Artifac-Plugin`, and install
+  Artifac from it.
 - **VS Code with Copilot**: in your user `settings.json`, add `"LeeorNahum/Artifac-Plugin"` to
   `chat.plugins.marketplaces`. Then search the Extensions view for `@agentPlugins` and install
-  Artifac.
+  Artifac. If it does not appear, check that `chat.plugins.enabled` is on.
+- **Devin Desktop**, formerly Windsurf: in Devin's Customize page, open Plugins, then Plugin
+  settings, then Edit manifest, and add
+  `{ "source": "github", "repo": "LeeorNahum/Artifac-Plugin", "ref": "dist" }` to
+  `requiredPlugins` in your Personal scope.
 - **ChatGPT on the web**: open [ChatGPT Plugins](https://chatgpt.com/plugins), choose the plus
-  button, then Add custom MCP server. Enter `https://mcp.artif.ac/mcp` and choose Create as a
-  plugin. This adds the Artifac tools without the skill, and your account or workspace settings
-  decide whether the option is offered.
+  button, then Add custom MCP server. Give it the name Artifac, enter `https://mcp.artif.ac/mcp`
+  as the server URL, choose OAuth for authentication, and choose Create as a plugin. This adds
+  the Artifac tools without the skill, and your account or workspace settings decide whether the
+  option is offered.
 - **Any other MCP client**: add `https://mcp.artif.ac/mcp` as a remote Streamable HTTP server.
 
 ## Sign in
