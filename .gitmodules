@@ -1,6 +1,6 @@
 [submodule "skills/artifac"]
 	path = skills/artifac
-	url = ../../Skill/artifac-skill
+	url = https://github.com/LeeorNahum/artifac-skill.git
 	branch = main
 [submodule ".agents/skills/release-versioning"]
 	path = .agents/skills/release-versioning

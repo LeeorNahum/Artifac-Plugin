@@ -71,11 +71,4 @@ codex plugin add artifac@artifac
 
 Start a new session after the update so the host rediscovers the skill and the server's tools.
 
-## Before publishing
-
-`.gitmodules` points `skills/artifac` at the local checkout `../../Skill/artifac-skill` until the
-skill repository is public. Before adding a remote, switch it with one line,
-`url = https://github.com/LeeorNahum/artifac-skill.git`, then run
-`git submodule sync -- skills/artifac` and delete this section.
-
 Licensed under the [Apache License 2.0](LICENSE).
