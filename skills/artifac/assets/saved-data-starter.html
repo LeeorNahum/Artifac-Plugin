@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Artifac reads the title and description for library cards and link previews. Add <link rel="icon" href="..."> once the artifact has an icon file. -->
+  <title>Shared list</title>
+  <meta name="description" content="A list everyone who opens this page can add to and check off.">
+  <style>
+    :root { color-scheme: light dark; font: 16px/1.5 system-ui, sans-serif; }
+    [hidden] { display: none !important; }
+    body { max-width: 36rem; margin: 0 auto; padding: 24px 16px; }
+    form { display: flex; gap: 8px; margin: 16px 0; }
+    input[type="text"] { flex: 1; padding: 8px; font: inherit; }
+    button { padding: 8px 12px; font: inherit; }
+    ul { list-style: none; padding: 0; }
+    li { display: flex; align-items: center; gap: 8px; padding: 6px 0; }
+    li span { flex: 1; }
+    li.done span { text-decoration: line-through; opacity: 0.6; }
+    #status { opacity: 0.7; }
+  </style>
+</head>
+<body>
+  <h1>Shared list</h1>
+  <form id="add" hidden>
+    <input id="text" type="text" required maxlength="200" aria-label="New item">
+    <button>Add</button>
+  </form>
+  <ul id="items"></ul>
+  <p id="status" role="status">Loading.</p>
+
+  <script type="module">
+    // The collection's name. With no entry in .artifac/config.json it is
+    // shared with every visitor, who can each add, check, and remove items.
+    // Naming it there makes session() report its exact rights, which this
+    // page then follows.
+    const COLLECTION = "items";
+
+    const list = document.getElementById("items");
+    const form = document.getElementById("add");
+    const input = document.getElementById("text");
+    const status = document.getElementById("status");
+
+    const say = (text) => { status.textContent = text; };
+
+    // Visitor wording by error code. An error's own hint is written for the page's author.
+    const MESSAGES = {
+      forbidden: "You can't change this list.",
+      conflict: "Someone changed this first. Try again.",
+      rate_limited: "Too many changes at once. Try again in a moment.",
+      unavailable: "Open this page on Artifac to see the shared list."
+    };
+    const explain = (error) => say(MESSAGES[error?.code] ?? "Couldn't save. Try again.");
+    // A failed read is not a failed save. Its message stays until records arrive.
+    let loadError = false;
+    const failedToLoad = (error) => {
+      loadError = true;
+      say(MESSAGES[error?.code] ?? "Couldn't load the list. Reload to try again.");
+    };
+
+    let sdk = null;
+    try {
+      sdk = await import("/__artifac/sdk.js");
+    } catch {
+      // Opened outside Artifac, such as from disk: there is no saved data.
+    }
+
+    if (sdk === null) {
+      say(MESSAGES.unavailable);
+    } else {
+      const items = sdk.collection(COLLECTION);
+      let canCreate = false;
+      let canChange = () => false;
+
+      try {
+        const me = await sdk.session();
+        const rights = me.collections[COLLECTION];
+        canCreate = rights ? rights.create : me.can_write;
+        canChange = (record) => (rights ? rights.change === "all" || (rights.change === "own" && record.mine) : me.can_write);
+      } catch (error) {
+        failedToLoad(error);
+      }
+      form.hidden = !canCreate;
+
+      const render = (records) => {
+        list.replaceChildren(...records.map((record) => {
+          const row = document.createElement("li");
+          row.classList.toggle("done", record.data.done === true);
+
+          const box = document.createElement("input");
+          box.type = "checkbox";
+          box.checked = record.data.done === true;
+          box.disabled = !canChange(record);
+          box.setAttribute("aria-label", `Done: ${record.data.text}`);
+          // merge sets one field, so two people changing different fields never overwrite each other.
+          box.addEventListener("change", () => {
+            items.update(record.id, { merge: { done: box.checked } }).catch((error) => {
+              box.checked = !box.checked;
+              explain(error);
+            });
+          });
+
+          const label = document.createElement("span");
+          label.textContent = String(record.data.text ?? "");
+
+          const remove = document.createElement("button");
+          remove.textContent = "Remove";
+          remove.hidden = !canChange(record);
+          remove.addEventListener("click", () => items.remove(record.id).catch(explain));
+
+          row.append(box, label, remove);
+          return row;
+        }));
+        if (!loadError || records.length > 0) say(records.length === 0 ? "Nothing here yet." : "");
+        if (records.length > 0) loadError = false;
+      };
+
+      // Called now and again after every change by anyone. No polling.
+      items.subscribe(render, { onError: failedToLoad });
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const text = input.value.trim();
+        if (text === "") return;
+        try {
+          await items.add({ text, done: false });
+          input.value = "";
+        } catch (error) {
+          explain(error);
+        }
+      });
+    }
+  </script>
+</body>
+</html>

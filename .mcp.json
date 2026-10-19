@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "artifac": {
+      "type": "streamable-http",
+      "url": "https://mcp.artif.ac/mcp"
+    }
+  }
+}

@@ -1,0 +1,99 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "artifac",
+  "version": "1.0.1",
+  "description": "Create and update interactive web pages, apps, and sites on Artifac, with saved data and files. Bundles the Artifac skill and connects the Artifac MCP server.",
+  "author": {
+    "name": "Leeor Nahum",
+    "url": "https://github.com/LeeorNahum"
+  },
+  "homepage": "https://artif.ac",
+  "repository": "https://github.com/LeeorNahum/Artifac-Plugin",
+  "license": "Apache-2.0",
+  "keywords": [
+    "artifac",
+    "artifacts",
+    "html",
+    "static-site",
+    "mcp",
+    "agent-skills"
+  ],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "Artifac",
+        "shortDescription": "Publish interactive web pages",
+        "longDescription": "Artifac is a home for interactive static artifacts: pages, small apps, games, dashboards, and sites made of HTML, CSS, and JavaScript, each at its own artif.ac link. With this plugin, ChatGPT can create an artifact in one of your workspaces, read and edit its files, add images and other files you attach, and set up saved data that visitors share or keep as their own. Every change is live at the artifact's link as soon as it is saved. A new artifact opens only for your workspace's members, and an Owner decides in the Artifac app who else can see it and whether it gets its own subdomain of artif.ac.",
+        "developerName": "Leeor Nahum",
+        "category": "Productivity",
+        "capabilities": [],
+        "websiteURL": "https://artif.ac",
+        "supportURL": "https://artif.ac/terms",
+        "privacyPolicyURL": "https://artif.ac/privacy",
+        "termsOfServiceURL": "https://artif.ac/terms",
+        "defaultPrompt": [
+          "Build a one-page countdown to my launch day and publish it on Artifac",
+          "Add a shared checklist to my Artifac page that visitors can tick off",
+          "Fix how my Artifac page looks on phones"
+        ],
+        "composerIcon": "./assets/icon.png",
+        "logo": "./assets/icon.png"
+      },
+      "review": {
+        "test_cases": {
+          "positive": [
+            {
+              "description": "Create an artifact from one HTML file.",
+              "prompt": "Make a one-page tip calculator and publish it on Artifac.",
+              "tools_triggered": "list_workspaces, create_artifact",
+              "expected_behavior": "Creates an artifact with an index.html in the test account's workspace and gives its artif.ac link. Says the page opens for the workspace's members and that sharing it more widely happens in the Artifac app."
+            },
+            {
+              "description": "Find an artifact and read its files.",
+              "prompt": "Which artifacts do I have on Artifac, and what files does the newest one contain?",
+              "tools_triggered": "list_artifacts, read_artifact",
+              "expected_behavior": "Lists the account's artifacts with their links, then reads the newest one's details and names each file in its manifest."
+            },
+            {
+              "description": "Change one file with an exact edit.",
+              "prompt": "On my tip calculator in Artifac, change the heading to Split the bill.",
+              "tools_triggered": "list_artifacts, read_artifact, edit_artifact_file",
+              "expected_behavior": "Reads index.html and replaces only the heading text. Opening the artifact's link shows the new heading."
+            },
+            {
+              "description": "Build a page with shared saved data.",
+              "prompt": "Make a shared packing checklist on Artifac that everyone who opens it can tick off, and put Bring snacks on it.",
+              "tools_triggered": "list_workspaces, create_artifact",
+              "expected_behavior": "Creates an artifact whose page keeps its items as saved data, with Bring snacks in its .artifac/data/ collection file. Ticking an item on the page persists after a reload."
+            },
+            {
+              "description": "Add an attached image to a page. Attach any PNG or JPEG photo to the message.",
+              "prompt": "Put the photo I attached on a new Artifac page with the caption Our team.",
+              "tools_triggered": "list_workspaces, create_artifact",
+              "expected_behavior": "Sends the attached photo through attachment_index, never as text, and creates a page that shows it with the caption. The image appears at the artifact's link."
+            }
+          ],
+          "negative": [
+            {
+              "description": "Visibility and subdomains are set only in the Artifac app. No tool changes them, so ChatGPT says an Owner does this in the Artifac app and does not claim it happened.",
+              "prompt": "Make my tip calculator on Artifac public and give it the subdomain tips.artif.ac."
+            },
+            {
+              "description": "Artifac hosts static files only. ChatGPT explains that it cannot run server code there and offers a page that works in the browser instead, without creating anything until the person agrees.",
+              "prompt": "Deploy this Flask server to Artifac so it can run my Python backend."
+            },
+            {
+              "description": "Nothing here concerns Artifac. ChatGPT answers without calling any Artifac tool.",
+              "prompt": "What is a good recipe for banana bread?"
+            }
+          ]
+        },
+        "commerce": false
+      },
+      "publication": {
+        "countries": [],
+        "release_notes": "First release: the Artifac skill and the Artifac MCP server, with eight tools to list, read, create, update, edit, and delete artifacts and their files."
+      }
+    }
+  }
+}
