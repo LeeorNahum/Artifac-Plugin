@@ -266,14 +266,11 @@ export async function validatePackage(root = scriptRoot) {
   await validateWithSchema(root, "mcp.json", mcp, "schemas/agent-plugins/mcp.schema.json", errors)
   await validateWithSchema(root, ".claude-plugin/plugin.json", claudePlugin, "schemas/claude/plugin.schema.json", errors)
   await validateWithSchema(root, ".claude-plugin/marketplace.json", claudeMarketplace, "schemas/claude/marketplace.schema.json", errors)
-  if (claudeMcp) {
-    await validateWithSchema(
-      root,
-      ".mcp.json",
-      { $schema: "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json", ...claudeMcp },
-      "schemas/agent-plugins/mcp.schema.json",
-      errors,
-    )
+  // Claude's plugin docs name a remote server's type "http", and claude.ai
+  // reads .mcp.json as those docs describe, so .mcp.json keeps exactly that shape.
+  if (claudeMcp && !hasExactKeys(claudeMcp, ["mcpServers"])) errors.push(".mcp.json must declare only mcpServers")
+  if (claudeMcp && !hasExactKeys(claudeMcp.mcpServers?.[pluginName], ["type", "url"])) {
+    errors.push(`.mcp.json ${pluginName} server must declare only type and url`)
   }
 
   addEqual(errors, "plugin.json $schema", plugin?.$schema, "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json")
@@ -287,7 +284,7 @@ export async function validatePackage(root = scriptRoot) {
   const canonicalServer = mcp?.mcpServers?.[pluginName]
   addEqual(errors, "mcp.json server type", canonicalServer?.type, "streamable-http")
   addEqual(errors, "mcp.json server URL", canonicalServer?.url, serverUrl)
-  addEqual(errors, ".mcp.json server type", claudeMcp?.mcpServers?.[pluginName]?.type, canonicalServer?.type)
+  addEqual(errors, ".mcp.json server type", claudeMcp?.mcpServers?.[pluginName]?.type, "http")
   addEqual(errors, ".mcp.json server URL", claudeMcp?.mcpServers?.[pluginName]?.url, canonicalServer?.url)
   rejectCredentialConfiguration(`mcp.json ${pluginName} server`, canonicalServer, errors)
   rejectCredentialConfiguration(`.mcp.json ${pluginName} server`, claudeMcp?.mcpServers?.[pluginName], errors)

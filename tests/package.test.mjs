@@ -196,6 +196,19 @@ test("credential-bearing Claude MCP configuration is rejected", async (context) 
   assert.ok(result.errors.includes(".mcp.json artifac server must not declare request headers or credentials"))
 })
 
+test("a Claude MCP entry not typed http, or carrying more than type and url, fails validation", async (context) => {
+  const candidate = await copyCandidate(context)
+  await editJson(resolve(candidate, ".mcp.json"), (mcp) => {
+    mcp.mcpServers.artifac.type = "streamable-http"
+    mcp.mcpServers.artifac.oauth = { clientId: "placeholder" }
+  })
+
+  const result = await validatePackage(candidate)
+  assert.equal(result.ok, false)
+  assert.ok(result.errors.some((error) => error.startsWith(".mcp.json server type")))
+  assert.ok(result.errors.includes(".mcp.json artifac server must declare only type and url"))
+})
+
 test("a different server address fails validation", async (context) => {
   const candidate = await copyCandidate(context)
   await editJson(resolve(candidate, ".mcp.json"), (mcp) => { mcp.mcpServers.artifac.url = "https://mcp.example.com/mcp" })
@@ -419,6 +432,8 @@ test("the release carries the package ZIP as its only asset, which Gemini CLI in
   const assets = command.split("\n").map((line) => line.trim()).filter((line) => /^"[^"]+"\s*\\?$/.test(line) && !line.includes("GITHUB_REF_NAME"))
   assert.deepEqual(assets, ['"dist/artifac-${VERSION}.zip" \\'])
   assert.match(workflow, /zip -X -r "artifac-\$\{VERSION\}\.zip" "artifac-\$\{VERSION\}"/)
+  assert.match(workflow, /test "\$\(gh release view "\$\{GITHUB_REF_NAME\}" --json assets --jq '\.assets \| length'\)" = 1/)
+  assert.doesNotMatch(workflow, /gh release upload/)
 })
 
 test("OpenAI staging refuses a listing without a demo recording", async (context) => {
