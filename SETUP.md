@@ -16,6 +16,11 @@ it asks for it.
 
 In Codex, run `codex mcp login artifac`.
 
+In Gemini CLI, run `/mcp auth artifac`.
+
+In the Claude app, open the Artifac plugin from Customize, then Plugins, and connect it on its
+Connectors tab. Its skill loads either way, but its tools wait for the connection.
+
 ## Check the connection
 
 Ask your agent to list your Artifac workspaces. Every account has at least one, so a list means

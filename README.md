@@ -5,8 +5,9 @@
 Connects an agent to [Artifac](https://artif.ac) through `https://mcp.artif.ac/mcp` and bundles
 the `artifac` Agent Skill, which teaches the agent to create and update artifacts, keep saved
 data, choose how to transfer each file, and recover from errors. The plugin ships the
-[Agent Plugins 1.0.0](https://agent-plugins.org) manifests (`plugin.json`, `mcp.json`) and a
-Claude Code adapter (`.claude-plugin/`, `.mcp.json`). It runs no hooks.
+[Agent Plugins 1.0.0](https://agent-plugins.org) manifests (`plugin.json`, `mcp.json`), a
+Claude Code adapter (`.claude-plugin/`, `.mcp.json`), and a Gemini CLI extension manifest
+(`gemini-extension.json`). It runs no hooks.
 
 The skill lives in its own repository,
 [artifac-skill](https://github.com/LeeorNahum/artifac-skill), included here at `skills/artifac`.
@@ -28,8 +29,8 @@ tools. Sharing, visibility, subdomains, and restoring from Trash happen in the A
 
 The host signs you in through its own MCP authentication the first time it calls the server.
 The connection reaches every workspace you belong to, now or later, and artifacts shared with you
-individually, with your current role in each. See [SETUP.md](SETUP.md) for the Claude Code steps
-and troubleshooting.
+individually, with your current role in each. See [SETUP.md](SETUP.md) for each host's sign-in
+steps and troubleshooting.
 
 ## Install
 
@@ -38,16 +39,23 @@ and troubleshooting.
 /plugin marketplace add LeeorNahum/Artifac-Plugin
 /plugin install artifac@artifac
 
-# Codex
+# Codex, and Codex in the ChatGPT desktop app
 codex plugin marketplace add LeeorNahum/Artifac-Plugin
 codex plugin add artifac@artifac
+
+# Gemini CLI
+gemini extensions install https://github.com/LeeorNahum/Artifac-Plugin
 ```
 
-In the Claude app, open Customize, then Plugins, add this repository as a marketplace by its
-GitHub address, and install Artifac from it.
+- **Claude app** (claude.ai, the desktop app, and Cowork): open Customize, then Plugins. Choose
+  Add, then Add marketplace, enter `LeeorNahum/Artifac-Plugin`, and install Artifac from it.
+- **Cursor**: open Customize, then Plugins. Choose Add Marketplace, then Import from GitHub,
+  paste `https://github.com/LeeorNahum/Artifac-Plugin`, and install Artifac from it.
+- **VS Code with Copilot**: add `"LeeorNahum/Artifac-Plugin"` to the `chat.plugins.marketplaces`
+  setting, then search the Extensions view for `@agentPlugins` and install Artifac.
 
-Any other MCP client can add `https://mcp.artif.ac/mcp` as a remote server, and install the skill
-from its own repository.
+Any other MCP client, ChatGPT on the web among them, can add `https://mcp.artif.ac/mcp` as a
+remote server and install the skill from its own repository.
 
 To work on the plugin itself, clone it with its submodules:
 
@@ -67,7 +75,12 @@ claude plugin update artifac@artifac
 # Codex
 codex plugin marketplace upgrade artifac
 codex plugin add artifac@artifac
+
+# Gemini CLI
+gemini extensions update artifac
 ```
+
+In the Claude app, select Check for updates on the marketplace, or turn on Sync automatically.
 
 Start a new session after the update so the host rediscovers the skill and the server's tools.
 
