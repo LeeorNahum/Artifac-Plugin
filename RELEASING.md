@@ -38,18 +38,6 @@ Validation uses canonical schemas vendored under `schemas/`. Normal validation i
 checks their recorded hashes. Refresh them only through the explicit network command
 `node scripts/sync-schemas.mjs --refresh`, then review the generated diff.
 
-## Before the first public release
-
-- The skill and the server send people to `npx artifac`. Publish Artifac-Web's CLI to npm as
-  `artifac` first, so the name cannot be taken by someone else and every CLI route the skill
-  teaches works.
-- Switch `.gitmodules` to `url = https://github.com/LeeorNahum/artifac-skill.git` before adding a
-  remote, run `git submodule sync -- skills/artifac`, and remove the README's "Before publishing"
-  section.
-- The OpenAI listing's website, support, privacy, and terms links must answer before submission,
-  and `supportURL` must lead to a support or contact page. `stage-openai.mjs` checks that they
-  answer.
-
 ## Why hosts install from `dist`
 
 Claude Code and Codex install a plugin from a Git clone. Codex copies the clone without fetching
